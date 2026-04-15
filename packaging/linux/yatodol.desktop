@@ -6,3 +6,5 @@ Icon=yatodol
 Terminal=false
 Type=Application
 Categories=Utility;Office;
+StartupWMClass=YATODOL
+Keywords=todo;task;list;
