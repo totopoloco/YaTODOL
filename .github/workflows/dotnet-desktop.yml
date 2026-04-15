@@ -154,6 +154,7 @@ jobs:
         dotnet-version: 10.0.x
 
     - name: Publish self-contained
+      shell: bash
       run: |
         APP_VERSION=$(grep -m1 '^## ' RELEASE.md | sed 's/^## //')
         dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:Version=${APP_VERSION} -o publish
