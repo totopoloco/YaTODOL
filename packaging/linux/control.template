@@ -1,0 +1,8 @@
+Package: yatodol
+Version: __VERSION__
+Section: utils
+Priority: optional
+Architecture: __ARCH__
+Maintainer: totopoloco
+Description: Yet another todo list
+ A cross-platform TODO list application built with Avalonia UI.

@@ -2,7 +2,7 @@
 Name=YaTODOL
 Comment=Yet another todo list
 Exec=/usr/lib/yatodol/YATODOL
-Icon=yatodol
+Icon=/usr/share/pixmaps/yatodol.png
 Terminal=false
 Type=Application
 Categories=Utility;Office;

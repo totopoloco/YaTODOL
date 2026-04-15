@@ -61,7 +61,7 @@ jobs:
       run: dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish
 
     - name: Install packaging tools
-      run: sudo apt-get update && sudo apt-get install -y imagemagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick desktop-file-utils
 
     - name: Build .deb package
       run: |
@@ -70,53 +70,39 @@ jobs:
         mkdir -p "${DEB_DIR}/DEBIAN"
         mkdir -p "${DEB_DIR}/usr/lib/yatodol"
         mkdir -p "${DEB_DIR}/usr/share/applications"
-        mkdir -p "${DEB_DIR}/usr/share/icons/hicolor/256x256/apps"
+        mkdir -p "${DEB_DIR}/usr/share/pixmaps"
         mkdir -p "${DEB_DIR}/usr/bin"
 
+        # Copy application files and set executable permission
         cp -r publish/* "${DEB_DIR}/usr/lib/yatodol/"
-        cp packaging/linux/yatodol.desktop "${DEB_DIR}/usr/share/applications/"
+        chmod +x "${DEB_DIR}/usr/lib/yatodol/YATODOL"
 
-        # Install icon at multiple sizes for proper dock/launcher display
-        for SIZE in 16 32 48 64 128 256; do
-          mkdir -p "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps"
-          convert app-icon-256.png -resize ${SIZE}x${SIZE} "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/yatodol.png"
-        done
-        mkdir -p "${DEB_DIR}/usr/share/pixmaps"
+        # Desktop entry and icon (absolute path, no icon cache dependency)
+        cp packaging/linux/yatodol.desktop "${DEB_DIR}/usr/share/applications/"
         cp app-icon-256.png "${DEB_DIR}/usr/share/pixmaps/yatodol.png"
 
-        # Create symlink for PATH access
+        # Also install in hicolor theme for icon cache
+        for SIZE in 16 32 48 64 128 256; do
+          mkdir -p "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps"
+          magick app-icon-256.png -resize "${SIZE}x${SIZE}" "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/yatodol.png"
+        done
+
+        # Symlink for PATH access
         ln -s /usr/lib/yatodol/YATODOL "${DEB_DIR}/usr/bin/yatodol"
 
-        cat > "${DEB_DIR}/DEBIAN/control" <<EOF
-        Package: yatodol
-        Version: ${APP_VERSION}
-        Section: utils
-        Priority: optional
-        Architecture: ${{ matrix.deb_arch }}
-        Maintainer: totopoloco
-        Description: Yet another todo list
-         A cross-platform TODO list application built with Avalonia UI.
-        EOF
+        # Control file from template
+        sed -e "s/__VERSION__/${APP_VERSION}/" -e "s/__ARCH__/${{ matrix.deb_arch }}/" \
+          packaging/linux/control.template > "${DEB_DIR}/DEBIAN/control"
 
-        # Remove leading spaces from control file (heredoc indentation)
-        sed -i 's/^        //' "${DEB_DIR}/DEBIAN/control"
-
-        # postinst: update icon cache and desktop database after install
-        cat > "${DEB_DIR}/DEBIAN/postinst" <<'POSTINST'
-        #!/bin/sh
-        set -e
-        if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-          gtk-update-icon-cache -f -t /usr/share/icons/hicolor || true
-        fi
-        if command -v update-desktop-database >/dev/null 2>&1; then
-          update-desktop-database /usr/share/applications || true
-        fi
-        POSTINST
-        sed -i 's/^        //' "${DEB_DIR}/DEBIAN/postinst"
+        # Post-install script
+        cp packaging/linux/postinst "${DEB_DIR}/DEBIAN/postinst"
         chmod 755 "${DEB_DIR}/DEBIAN/postinst"
-
         chmod 755 "${DEB_DIR}/DEBIAN"
+
         dpkg-deb --build "${DEB_DIR}" "yatodol_${APP_VERSION}_${{ matrix.deb_arch }}.deb"
+
+        # Verify contents
+        dpkg-deb -c "yatodol_${APP_VERSION}_${{ matrix.deb_arch }}.deb" | head -30
 
     - name: Upload .deb artifact
       uses: actions/upload-artifact@v4
