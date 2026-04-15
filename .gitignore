@@ -1,0 +1,38 @@
+## .NET
+bin/
+obj/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.rsuser
+*.csproj.user
+launchSettings.json
+
+## OS files
+.DS_Store
+Thumbs.db
