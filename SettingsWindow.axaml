@@ -1,0 +1,103 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="520"
+        x:Class="YATODOL.SettingsWindow"
+        Title="Settings" Width="460" Height="580"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="24">
+        <!-- Title -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20">
+            <TextBlock Text="⚙ Settings" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Customize how YATODOL behaves"
+                       Foreground="Gray" FontSize="13" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Buttons (dock first so they always appear) -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+            <Button Content="Cancel" Click="OnCancelClick" Width="90" Padding="12,8"/>
+            <Button Content="Save" Click="OnSaveClick" Classes="accent" Width="90" Padding="12,8"/>
+        </StackPanel>
+
+        <!-- Settings list (fills remaining space) -->
+        <ScrollViewer>
+            <StackPanel Spacing="20">
+
+                <!-- Appearance section -->
+                <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14"
+                                   Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <RadioButton x:Name="ThemeLight" Content="☀ Light" GroupName="Theme"/>
+                            <RadioButton x:Name="ThemeDark" Content="🌙 Dark" GroupName="Theme"/>
+                            <RadioButton x:Name="ThemeSystem" Content="💻 System" GroupName="Theme"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- General section -->
+                <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="General" FontWeight="SemiBold" FontSize="14"
+                                   Margin="0,0,0,6"/>
+                        <CheckBox x:Name="ShowPathCheck">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Show file path in title bar"/>
+                                <TextBlock Text="Displays the data file location in the window title"
+                                           Foreground="Gray" FontSize="11"/>
+                            </StackPanel>
+                        </CheckBox>
+                        <CheckBox x:Name="HideCompletedDatesCheck">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Hide fully completed dates"/>
+                                <TextBlock Text="Dates where all tasks are done will be hidden from the list"
+                                           Foreground="Gray" FontSize="11"/>
+                            </StackPanel>
+                        </CheckBox>
+                        <CheckBox x:Name="CarryForwardCheck">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Carry forward uncompleted tasks"/>
+                                <TextBlock Text="Moves past uncompleted tasks to today automatically at midnight"
+                                           Foreground="Gray" FontSize="11"/>
+                            </StackPanel>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Print section -->
+                <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="12">
+                        <TextBlock Text="🖨 Printing" FontWeight="SemiBold" FontSize="14"
+                                   Margin="0,0,0,2"/>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Scope" FontSize="12" Foreground="Gray"
+                                       Margin="0,0,0,2"/>
+                            <RadioButton x:Name="ScopeSelectedDate" Content="Selected date only"
+                                         GroupName="PrintScope" IsChecked="True"/>
+                            <RadioButton x:Name="ScopeAllDates" Content="All dates"
+                                         GroupName="PrintScope"/>
+                        </StackPanel>
+
+                        <Border Height="1" Background="#18888888" Margin="0,2"/>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Filter" FontSize="12" Foreground="Gray"
+                                       Margin="0,0,0,2"/>
+                            <RadioButton x:Name="FilterAll" Content="All items (active + completed)"
+                                         GroupName="PrintFilter" IsChecked="True"/>
+                            <RadioButton x:Name="FilterRemaining" Content="Remaining only (hide completed)"
+                                         GroupName="PrintFilter"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

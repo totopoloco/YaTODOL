@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="480"
+        x:Class="YATODOL.ICalExportWindow"
+        Title="Export to iCal" Width="500" Height="480"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="24">
+        <!-- Title -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <TextBlock Text="📅 Export to iCal" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Select tasks to export as .ics calendar events"
+                       Foreground="Gray" FontSize="13" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="10" Margin="0,16,0,0">
+            <Button Content="Cancel" Click="OnCancelClick" Width="90" Padding="12,8"/>
+            <Button Content="Export" Click="OnExportClick" Classes="accent" Width="90" Padding="12,8"/>
+        </StackPanel>
+
+        <!-- Quick select -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="0,0,0,12">
+            <Button Content="Select All" Click="OnSelectAll" Padding="8,4" FontSize="12"/>
+            <Button Content="Select None" Click="OnSelectNone" Padding="8,4" FontSize="12"/>
+            <Button Content="Uncompleted Only" Click="OnSelectUncompleted" Padding="8,4" FontSize="12"/>
+        </StackPanel>
+
+        <!-- Task list -->
+        <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="4">
+            <ScrollViewer>
+                <StackPanel x:Name="TaskListPanel" Spacing="2"/>
+            </ScrollViewer>
+        </Border>
+    </DockPanel>
+</Window>
