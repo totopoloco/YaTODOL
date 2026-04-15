@@ -84,7 +84,11 @@ jobs:
         # Also install in hicolor theme for icon cache
         for SIZE in 16 32 48 64 128 256; do
           mkdir -p "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps"
-          magick app-icon-256.png -resize "${SIZE}x${SIZE}" "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/yatodol.png"
+          if command -v magick >/dev/null 2>&1; then
+            magick app-icon-256.png -resize "${SIZE}x${SIZE}" "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/yatodol.png"
+          else
+            convert app-icon-256.png -resize "${SIZE}x${SIZE}" "${DEB_DIR}/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/yatodol.png"
+          fi
         done
 
         # Symlink for PATH access
