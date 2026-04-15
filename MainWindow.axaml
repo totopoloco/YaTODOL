@@ -48,6 +48,8 @@
                 <Button Content="📅 iCal" Click="OnICalExportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"
                         ToolTip.Tip="Export tasks to iCalendar (.ics)"/>
                 <Button Content="⚙ Settings" Click="OnSettingsClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+                <Button Content="ℹ" Click="OnAboutClick" Padding="6,4"
+                        FontSize="12" ToolTip.Tip="About YaTODOL"/>
             </StackPanel>
         </Grid>
 

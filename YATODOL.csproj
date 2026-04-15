@@ -5,10 +5,15 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="app-icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="RELEASE.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

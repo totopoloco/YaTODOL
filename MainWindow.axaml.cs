@@ -369,6 +369,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void OnAboutClick(object? sender, RoutedEventArgs e)
+    {
+        var win = new AboutWindow();
+        await win.ShowDialog(this);
+    }
+
     private void UpdateTitle()
     {
         Title = _settings.ShowPathInTitle
