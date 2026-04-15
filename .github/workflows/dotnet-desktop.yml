@@ -61,7 +61,7 @@ jobs:
       run: dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -o publish
 
     - name: Install packaging tools
-      run: sudo apt-get update && sudo apt-get install -y imagemagick desktop-file-utils
+      run: sudo apt-get update && sudo apt-get install -y imagemagick desktop-file-utils fakeroot
 
     - name: Build .deb package
       run: |
@@ -103,7 +103,10 @@ jobs:
         chmod 755 "${DEB_DIR}/DEBIAN/postinst"
         chmod 755 "${DEB_DIR}/DEBIAN"
 
-        dpkg-deb --build "${DEB_DIR}" "yatodol_${APP_VERSION}_${{ matrix.deb_arch }}.deb"
+        # Fix ownership to root:root (critical for GNOME to trust .desktop files)
+        sudo chown -R root:root "${DEB_DIR}"
+
+        fakeroot dpkg-deb --build "${DEB_DIR}" "yatodol_${APP_VERSION}_${{ matrix.deb_arch }}.deb"
 
         # Verify contents
         dpkg-deb -c "yatodol_${APP_VERSION}_${{ matrix.deb_arch }}.deb" | head -30

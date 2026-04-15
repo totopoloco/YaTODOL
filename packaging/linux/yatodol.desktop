@@ -6,5 +6,5 @@ Icon=/usr/share/pixmaps/yatodol.png
 Terminal=false
 Type=Application
 Categories=Utility;Office;
-StartupWMClass=YATODOL
+StartupWMClass=yatodol
 Keywords=todo;task;list;
