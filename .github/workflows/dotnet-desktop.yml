@@ -101,6 +101,11 @@ jobs:
         # Post-install script
         cp packaging/linux/postinst "${DEB_DIR}/DEBIAN/postinst"
         chmod 755 "${DEB_DIR}/DEBIAN/postinst"
+
+        # Post-removal script
+        cp packaging/linux/postrm "${DEB_DIR}/DEBIAN/postrm"
+        chmod 755 "${DEB_DIR}/DEBIAN/postrm"
+
         chmod 755 "${DEB_DIR}/DEBIAN"
 
         # Fix ownership to root:root (critical for GNOME to trust .desktop files)
