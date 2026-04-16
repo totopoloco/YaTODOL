@@ -33,6 +33,9 @@ bld/
 *.csproj.user
 launchSettings.json
 
+## Claude Code
+.claude/
+
 ## OS files
 .DS_Store
 Thumbs.db
