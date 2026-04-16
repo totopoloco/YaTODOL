@@ -153,14 +153,37 @@ jobs:
       with:
         dotnet-version: 10.0.x
 
-    - name: Publish self-contained
+    - name: Extract version
+      id: version
       shell: bash
       run: |
         APP_VERSION=$(grep -m1 '^## ' RELEASE.md | sed 's/^## //')
-        dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:Version=${APP_VERSION} -o publish
+        echo "version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
 
-    - name: Upload Windows artifact
+    - name: Publish self-contained
+      shell: bash
+      run: |
+        dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:Version=${{ steps.version.outputs.version }} -o publish
+
+    - name: Convert icon to ICO
+      shell: pwsh
+      run: magick app-icon-256.png -define icon:auto-resize=256,128,64,48,32,16 app-icon.ico
+
+    - name: Build installer
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.version }}"
+        $arch = "${{ matrix.arch }}"
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="$version" /DMyAppArch="$arch" packaging\windows\installer.iss
+
+    - name: Upload Windows executable
       uses: actions/upload-artifact@v4
       with:
         name: yatodol-windows-${{ matrix.arch }}
         path: publish/
+
+    - name: Upload Windows installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: yatodol-installer-windows-${{ matrix.arch }}
+        path: installer-output/*.exe
