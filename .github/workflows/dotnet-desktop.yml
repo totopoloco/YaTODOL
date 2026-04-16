@@ -165,6 +165,29 @@ jobs:
       run: |
         dotnet publish YATODOL.csproj -c Release -r ${{ matrix.rid }} --self-contained true -p:Version=${{ steps.version.outputs.version }} -o publish
 
+    - name: Zip publish output for signing
+      shell: pwsh
+      run: Compress-Archive -Path publish\* -DestinationPath publish-unsigned.zip
+
+    - name: Upload app bundle for signing
+      id: upload-app-bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: yatodol-unsigned-bundle-${{ matrix.arch }}
+        path: publish-unsigned.zip
+
+    - name: Sign application files (exe + DLLs)
+      uses: signpath/github-action-submit-signing-request@v1
+      with:
+        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+        organization-id: b8a72683-2e25-460b-a53d-3d30ffcef894
+        project-slug: YaTODOL
+        signing-policy-slug: YaTODOL
+        artifact-configuration-slug: app-bundle
+        github-artifact-id: ${{ steps.upload-app-bundle.outputs.artifact-id }}
+        wait-for-completion: true
+        output-artifact-directory: publish-signed
+
     - name: Convert icon to ICO
       shell: pwsh
       run: magick app-icon-256.png -define icon:auto-resize=256,128,64,48,32,16 app-icon.ico
@@ -174,16 +197,35 @@ jobs:
       run: |
         $version = "${{ steps.version.outputs.version }}"
         $arch = "${{ matrix.arch }}"
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="$version" /DMyAppArch="$arch" packaging\windows\installer.iss
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="$version" /DMyAppArch="$arch" /DMySourceDir="..\..\publish-signed" packaging\windows\installer.iss
 
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4
       with:
         name: yatodol-windows-${{ matrix.arch }}
-        path: publish/
+        path: publish-signed/
 
-    - name: Upload Windows installer
+    - name: Upload installer for signing
+      id: upload-installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: yatodol-installer-unsigned-${{ matrix.arch }}
+        path: installer-output\*.exe
+
+    - name: Sign installer
+      uses: signpath/github-action-submit-signing-request@v1
+      with:
+        api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+        organization-id: b8a72683-2e25-460b-a53d-3d30ffcef894
+        project-slug: YaTODOL
+        signing-policy-slug: YaTODOL
+        artifact-configuration-slug: initial
+        github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+        wait-for-completion: true
+        output-artifact-directory: installer-signed
+
+    - name: Upload signed installer
       uses: actions/upload-artifact@v4
       with:
         name: yatodol-installer-windows-${{ matrix.arch }}
-        path: installer-output/*.exe
+        path: installer-signed\*.exe
