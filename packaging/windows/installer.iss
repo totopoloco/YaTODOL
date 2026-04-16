@@ -1,11 +1,5 @@
 ; Inno Setup script for YaTODOL
-; MyAppVersion, MyAppArch, and MySourceDir are passed from the command line via /D flags.
-
-; Default source directory for local builds (relative to this .iss file).
-; CI overrides this to point at the signed publish output.
-#ifndef MySourceDir
-  #define MySourceDir "..\..\publish"
-#endif
+; MyAppVersion and MyAppArch are passed from the command line via /D flags.
 
 #define MyAppName "YaTODOL"
 #define MyAppExeName "YATODOL.exe"
@@ -38,7 +32,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#MySourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
