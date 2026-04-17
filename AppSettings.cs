@@ -9,6 +9,14 @@ public enum ThemeMode
     System
 }
 
+public enum AppLanguage
+{
+    English,
+    Spanish,
+    German,
+    French
+}
+
 public enum PrintScope
 {
     SelectedDate,
@@ -29,6 +37,7 @@ public class AppSettings
     public bool CarryForwardTasks { get; set; } = true;
     public PrintScope PrintScope { get; set; } = PrintScope.SelectedDate;
     public PrintFilter PrintFilter { get; set; } = PrintFilter.AllItems;
+    public AppLanguage Language { get; set; } = AppLanguage.English;
 }
 
 public class ExportData

@@ -8,13 +8,15 @@
 ## Features
 
 - **Date-based task organization** — tasks grouped by date with expandable accordion sections
+- **Task notes** — attach plain-text notes to any task, visible in print output
 - **Carry forward** — automatically moves uncompleted past tasks to today at midnight
+- **Multi-language support** — English, Spanish, German, and French
 - **iCalendar export** — export selected tasks as `.ics` calendar events
-- **Print support** — configurable scope (selected date or all) with filters
+- **Print support** — configurable scope (selected date or all) with filters, includes notes
 - **Theme support** — Light, Dark, and System theme modes
 - **Import/Export** — backup and restore your data
 - **Date navigation** — previous/next day, jump to today, calendar date picker
-- **Settings** — hide completed dates, show file path in title, print preferences
+- **Settings** — hide completed dates, show file path in title, print preferences, language selection
 
 ## Requirements
 
@@ -27,6 +29,15 @@ git clone git@github.com:totopoloco/YaTODOL.git
 cd YaTODOL
 dotnet restore
 dotnet run
+```
+
+### Windows first-time setup
+
+If you get a `No NuGet sources are defined or enabled` error, add the default feed and install the Avalonia templates:
+
+```powershell
+dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
+dotnet new install Avalonia.Templates
 ```
 
 ## Downloads

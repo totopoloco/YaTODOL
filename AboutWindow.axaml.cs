@@ -11,7 +11,15 @@ public partial class AboutWindow : Window
     public AboutWindow()
     {
         InitializeComponent();
+        ApplyLocalization();
         LoadReleaseNotes();
+    }
+
+    private void ApplyLocalization()
+    {
+        Title = Strings.AboutWindowTitle;
+        AboutSubtitleText.Text = Strings.AboutSubtitle;
+        CloseButton.Content = Strings.ButtonClose;
     }
 
     private void LoadReleaseNotes()

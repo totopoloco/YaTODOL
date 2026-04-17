@@ -4,17 +4,12 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Data;
-using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -23,30 +18,28 @@ namespace YATODOL;
 
 public partial class MainWindow : Window
 {
-    private static readonly string SavePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "YATODOL", "todos.json");
-
-    private static readonly string SettingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "YATODOL", "settings.json");
-
     private readonly ObservableCollection<TodoItem> _allItems = new();
     private readonly Dictionary<DateTime, Expander> _expanders = new();
+    private readonly AccordionBuilder _accordionBuilder;
     private DateTime _selectedDate = DateTime.Today;
     private Timer? _midnightTimer;
+    private Timer? _warningTimer;
 
     private AppSettings _settings = new();
 
     public MainWindow()
     {
         InitializeComponent();
+        _accordionBuilder = new AccordionBuilder(OnCheckChanged, OnDeleteClick, OnNoteClick);
         DatePicker.SelectedDate = _selectedDate;
         DatePicker.SelectedDateChanged += OnDateChanged;
-        LoadSettings();
+        _settings = DataService.LoadSettings();
+        Strings.SetLanguage(_settings.Language);
         ApplyTheme();
+        ApplyLocalization();
         UpdateTitle();
-        Load();
+        foreach (var item in DataService.LoadTodos())
+            _allItems.Add(item);
         CarryForwardPastTasks();
         RebuildAccordion();
         ScheduleMidnightCheck();
@@ -90,7 +83,7 @@ public partial class MainWindow : Window
             moved = true;
         }
 
-        if (moved) Save();
+        if (moved) DataService.SaveTodos(_allItems);
     }
 
     private void OnAddClick(object? sender, RoutedEventArgs e) => AddItem();
@@ -108,18 +101,35 @@ public partial class MainWindow : Window
 
         if (_selectedDate.Date < DateTime.Today)
         {
-            NewItemBox.PlaceholderText = "Cannot add tasks in the past!";
-            NewItemBox.Text = string.Empty;
+            ShowWarning(Strings.NoPastTasks);
             return;
         }
 
+        HideWarning();
         var item = new TodoItem { Title = text, Date = _selectedDate };
         _allItems.Add(item);
         NewItemBox.Text = string.Empty;
-        NewItemBox.PlaceholderText = "Add a new task...";
+        NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
         RebuildAccordion();
-        Save();
+        DataService.SaveTodos(_allItems);
         NewItemBox.Focus();
+    }
+
+    private void ShowWarning(string message)
+    {
+        WarningLabel.Text = message;
+        WarningLabel.IsVisible = true;
+        _warningTimer?.Dispose();
+        _warningTimer = new Timer(_ =>
+            Dispatcher.UIThread.Post(HideWarning),
+            null, TimeSpan.FromSeconds(4), Timeout.InfiniteTimeSpan);
+    }
+
+    private void HideWarning()
+    {
+        WarningLabel.IsVisible = false;
+        _warningTimer?.Dispose();
+        _warningTimer = null;
     }
 
     private void OnDeleteClick(object? sender, RoutedEventArgs e)
@@ -128,7 +138,7 @@ public partial class MainWindow : Window
         {
             _allItems.Remove(item);
             RebuildAccordion();
-            Save();
+            DataService.SaveTodos(_allItems);
         }
     }
 
@@ -137,7 +147,7 @@ public partial class MainWindow : Window
         // Remember which dates are expanded
         var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
         RebuildAccordion(expanded);
-        Save();
+        DataService.SaveTodos(_allItems);
     }
 
     private void OnDateChanged(object? sender, SelectionChangedEventArgs e)
@@ -172,50 +182,15 @@ public partial class MainWindow : Window
         var items = _allItems.Where(i => i.Date.Date == _selectedDate.Date).ToList();
         if (items.Count == 0) return;
 
-        var box = new Avalonia.Controls.Window
-        {
-            Title = "Confirm Delete",
-            Width = 400, Height = 160,
-            CanResize = false,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Content = new StackPanel
-            {
-                Margin = new Thickness(20),
-                Spacing = 16,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = $"Delete all {items.Count} task(s) for {_selectedDate:ddd, MMM d, yyyy}?\nThis includes completed and uncompleted items.",
-                        TextWrapping = TextWrapping.Wrap
-                    },
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 8,
-                        Children =
-                        {
-                            new Button { Content = "Cancel", Width = 80, Tag = false },
-                            new Button { Content = "Delete", Width = 80, Tag = true, Classes = { "accent" } }
-                        }
-                    }
-                }
-            }
-        };
+        var message = Strings.ConfirmDeleteText(items.Count, _selectedDate.ToString("ddd, MMM d, yyyy"));
+        if (!await DialogService.ShowConfirmDialog(this,
+            Strings.ConfirmDeleteTitle, message, Strings.ButtonDelete, Strings.ButtonCancel))
+            return;
 
-        var buttons = ((StackPanel)((StackPanel)box.Content).Children[1]).Children;
-        foreach (Button btn in buttons)
-            btn.Click += (_, _) => box.Close(btn.Tag);
-
-        var result = await box.ShowDialog<object?>(this);
-        if (result is true)
-        {
-            foreach (var item in items)
-                _allItems.Remove(item);
-            RebuildAccordion();
-            Save();
-        }
+        foreach (var item in items)
+            _allItems.Remove(item);
+        RebuildAccordion();
+        DataService.SaveTodos(_allItems);
     }
 
     private void NavigateToDate(DateTime date)
@@ -243,7 +218,17 @@ public partial class MainWindow : Window
         {
             var date = group.Key;
             var isExpanded = expandedDates?.Contains(date) ?? date == _selectedDate.Date;
-            var expander = CreateDateExpander(date, group.ToList(), isExpanded);
+            var expander = _accordionBuilder.CreateDateExpander(date, group.ToList(), isExpanded);
+
+            expander.PropertyChanged += (s, e) =>
+            {
+                if (e.Property == Expander.IsExpandedProperty && expander.IsExpanded && expander.Tag is DateTime d)
+                {
+                    _selectedDate = d;
+                    DatePicker.SelectedDate = d;
+                }
+            };
+
             AccordionPanel.Children.Add(expander);
             _expanders[date] = expander;
         }
@@ -251,106 +236,21 @@ public partial class MainWindow : Window
         UpdateCount();
     }
 
-    private Expander CreateDateExpander(DateTime date, List<TodoItem> items, bool isExpanded)
+    private async void OnNoteClick(object? sender, RoutedEventArgs e)
     {
-        var remaining = items.Count(i => !i.IsDone);
-
-        var expander = new Expander
+        if (sender is Button btn && btn.DataContext is TodoItem item)
         {
-            IsExpanded = isExpanded,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(0, 0, 0, 2),
-            Header = CreateDateHeader(date, remaining, items.Count),
-            Content = CreateItemsPanel(items),
-            Tag = date
-        };
-
-        expander.PropertyChanged += (s, e) =>
-        {
-            if (e.Property == Expander.IsExpandedProperty && expander.IsExpanded && expander.Tag is DateTime d)
+            var win = new NoteEditorWindow();
+            win.LoadNote(item.Title, item.Note);
+            var result = await win.ShowDialog<bool?>(this);
+            if (result == true)
             {
-                _selectedDate = d;
-                DatePicker.SelectedDate = d;
+                item.Note = win.ResultNote;
+                var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
+                RebuildAccordion(expanded);
+                DataService.SaveTodos(_allItems);
             }
-        };
-
-        return expander;
-    }
-
-    private static Control CreateDateHeader(DateTime date, int remaining, int total)
-    {
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        panel.Children.Add(new TextBlock
-        {
-            Text = date == DateTime.Today ? $"Today \u2014 {date:ddd, MMM d}" : date.ToString("ddd, MMM d, yyyy"),
-            FontWeight = FontWeight.SemiBold,
-            FontSize = 14
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"({remaining} remaining of {total})",
-            Foreground = Brushes.Gray,
-            FontSize = 12,
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        return panel;
-    }
-
-    private StackPanel CreateItemsPanel(List<TodoItem> items)
-    {
-        var panel = new StackPanel { Spacing = 2 };
-        foreach (var item in items.OrderBy(i => i.IsDone))
-            panel.Children.Add(CreateTodoRow(item));
-        return panel;
-    }
-
-    private Grid CreateTodoRow(TodoItem item)
-    {
-        var row = new Grid
-        {
-            ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto"),
-            DataContext = item,
-            Opacity = item.IsDone ? 0.5 : 1.0
-        };
-
-        var cb = new CheckBox
-        {
-            [!CheckBox.IsCheckedProperty] = new Binding("IsDone") { Mode = BindingMode.TwoWay },
-            DataContext = item,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-        cb.Click += OnCheckChanged;
-        cb.Click += (_, _) => row.Opacity = item.IsDone ? 0.5 : 1.0;
-        Grid.SetColumn(cb, 0);
-
-        var tb = new TextBlock
-        {
-            Text = item.Title,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0),
-            TextWrapping = TextWrapping.Wrap,
-            TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null
-        };
-        cb.Click += (_, _) => tb.TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null;
-        Grid.SetColumn(tb, 1);
-
-        var del = new Button
-        {
-            Content = "\u2715",
-            DataContext = item,
-            VerticalAlignment = VerticalAlignment.Center,
-            Background = Brushes.Transparent,
-            Foreground = Brushes.Gray,
-            FontSize = 14,
-            Padding = new Thickness(6, 2)
-        };
-        del.Click += OnDeleteClick;
-        Grid.SetColumn(del, 2);
-
-        row.Children.Add(cb);
-        row.Children.Add(tb);
-        row.Children.Add(del);
-        return row;
+        }
     }
 
     private async void OnSettingsClick(object? sender, RoutedEventArgs e)
@@ -361,11 +261,18 @@ public partial class MainWindow : Window
         if (result == true)
         {
             _settings = win.Result;
+            Strings.SetLanguage(_settings.Language);
             ApplyTheme();
+            ApplyLocalization();
             UpdateTitle();
-            SaveSettings();
+            DataService.SaveSettings(_settings);
             CarryForwardPastTasks();
             RebuildAccordion();
+        }
+        else
+        {
+            // Restore language in case user previewed a different one
+            Strings.SetLanguage(_settings.Language);
         }
     }
 
@@ -378,29 +285,23 @@ public partial class MainWindow : Window
     private void UpdateTitle()
     {
         Title = _settings.ShowPathInTitle
-            ? $"YATODOL \u2014 {SavePath}"
+            ? $"YATODOL \u2014 {DataService.SavePath}"
             : "YATODOL";
     }
 
-    private void LoadSettings()
+    private void ApplyLocalization()
     {
-        if (!File.Exists(SettingsPath)) return;
-        try
-        {
-            var json = File.ReadAllText(SettingsPath);
-            var settings = JsonSerializer.Deserialize<AppSettings>(json);
-            if (settings is not null)
-                _settings = settings;
-        }
-        catch { /* ignore corrupt file */ }
-    }
-
-    private void SaveSettings()
-    {
-        var dir = Path.GetDirectoryName(SettingsPath)!;
-        Directory.CreateDirectory(dir);
-        var json = JsonSerializer.Serialize(_settings);
-        File.WriteAllText(SettingsPath, json);
+        HeaderLabel.Text = Strings.AppTitle;
+        TodayButton.Content = Strings.ButtonToday;
+        ToolTip.SetTip(DeleteDateButton, Strings.TooltipDeleteDate);
+        PrintButton.Content = Strings.ButtonPrint;
+        ImportButton.Content = Strings.ButtonImport;
+        ExportButton.Content = Strings.ButtonExport;
+        ToolTip.SetTip(ICalButton, Strings.TooltipICal);
+        SettingsButton.Content = Strings.ButtonSettings;
+        ToolTip.SetTip(AboutButton, Strings.TooltipAbout);
+        AddButton.Content = Strings.ButtonAdd;
+        NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
     }
 
     private void ApplyTheme()
@@ -439,40 +340,11 @@ public partial class MainWindow : Window
         });
         if (file is null) return;
 
-        var sb = new StringBuilder();
-        sb.AppendLine("BEGIN:VCALENDAR");
-        sb.AppendLine("VERSION:2.0");
-        sb.AppendLine("PRODID:-//YATODOL//Yet Another To Do List//EN");
-        sb.AppendLine("CALSCALE:GREGORIAN");
-        sb.AppendLine("METHOD:PUBLISH");
-
-        foreach (var item in win.SelectedItems)
-        {
-            var uid = Guid.NewGuid().ToString();
-            var dateStr = item.Date.ToString("yyyyMMdd");
-            var nextDateStr = item.Date.AddDays(1).ToString("yyyyMMdd");
-            var nowStr = DateTime.UtcNow.ToString("yyyyMMdd'T'HHmmss'Z'");
-            var prefix = item.IsDone ? "✓ " : "☐ ";
-
-            sb.AppendLine("BEGIN:VEVENT");
-            sb.AppendLine($"UID:{uid}");
-            sb.AppendLine($"DTSTAMP:{nowStr}");
-            sb.AppendLine($"DTSTART;VALUE=DATE:{dateStr}");
-            sb.AppendLine($"DTEND;VALUE=DATE:{nextDateStr}");
-            sb.AppendLine($"SUMMARY:{EscapeICalText(prefix + item.Title)}");
-            sb.AppendLine("TRANSP:TRANSPARENT");
-            sb.AppendLine("END:VEVENT");
-        }
-
-        sb.AppendLine("END:VCALENDAR");
-
+        var icalContent = ICalService.GenerateICalString(win.SelectedItems);
         await using var stream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(stream, Encoding.UTF8);
-        await writer.WriteAsync(sb.ToString());
+        await writer.WriteAsync(icalContent);
     }
-
-    private static string EscapeICalText(string text) =>
-        text.Replace("\\", "\\\\").Replace(";", "\\;").Replace(",", "\\,").Replace("\n", "\\n");
 
     private async void OnExportClick(object? sender, RoutedEventArgs e)
     {
@@ -484,9 +356,8 @@ public partial class MainWindow : Window
         });
         if (file is null) return;
 
-        var json = JsonSerializer.Serialize(
-            new ExportData { Todos = _allItems.ToList(), Settings = _settings },
-            new JsonSerializerOptions { WriteIndented = true });
+        var json = DataService.SerializeExport(
+            new ExportData { Todos = _allItems.ToList(), Settings = _settings });
         await using var stream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(stream);
         await writer.WriteAsync(json);
@@ -507,7 +378,7 @@ public partial class MainWindow : Window
             await using var stream = await files[0].OpenReadAsync();
             using var reader = new StreamReader(stream);
             var json = await reader.ReadToEndAsync();
-            var data = JsonSerializer.Deserialize<ExportData>(json);
+            var data = DataService.DeserializeImport(json);
             if (data is null) return;
 
             _allItems.Clear();
@@ -515,12 +386,14 @@ public partial class MainWindow : Window
                 _allItems.Add(item);
 
             _settings = data.Settings;
+            Strings.SetLanguage(_settings.Language);
             ApplyTheme();
+            ApplyLocalization();
             UpdateTitle();
-            SaveSettings();
+            DataService.SaveSettings(_settings);
             CarryForwardPastTasks();
             RebuildAccordion();
-            Save();
+            DataService.SaveTodos(_allItems);
         }
         catch { /* ignore invalid file */ }
     }
@@ -530,7 +403,7 @@ public partial class MainWindow : Window
         var total = _allItems.Count;
         var remaining = _allItems.Count(i => !i.IsDone);
         var dates = _allItems.Select(i => i.Date.Date).Distinct().Count();
-        CountLabel.Text = $"{remaining} remaining of {total} across {dates} date{(dates != 1 ? "s" : "")}";
+        CountLabel.Text = Strings.CountLabel(remaining, total, dates);
     }
 
     private void OnPrintClick(object? sender, RoutedEventArgs e)
@@ -538,133 +411,16 @@ public partial class MainWindow : Window
         var allDates = _settings.PrintScope == PrintScope.AllDates;
         var remainingOnly = _settings.PrintFilter == PrintFilter.RemainingOnly;
 
-        // Gather items based on scope
         var items = allDates
             ? _allItems.ToList()
             : _allItems.Where(i => i.Date.Date == _selectedDate.Date).ToList();
 
-        // Apply filter
         if (remainingOnly)
             items = items.Where(i => !i.IsDone).ToList();
 
-        var sb = new StringBuilder();
-        sb.AppendLine("<!DOCTYPE html>");
-        sb.AppendLine("<html><head><meta charset='utf-8'>");
-        sb.AppendLine("<title>YATODOL</title>");
-        sb.AppendLine("<style>");
-        sb.AppendLine("""
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Inter', sans-serif; max-width: 640px; margin: 40px auto;
-                   padding: 0 24px; color: #1a1a2e; }
-            h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-            .subtitle { color: #888; font-size: 14px; margin-bottom: 32px; }
-            .day-header { font-size: 16px; font-weight: 700; color: #1a1a2e; margin: 28px 0 8px;
-                          padding-bottom: 6px; border-bottom: 2px solid #4a6cf7; }
-            .day-header:first-of-type { margin-top: 0; }
-            .section { margin-bottom: 16px; }
-            .section-title { font-size: 12px; font-weight: 600; text-transform: uppercase;
-                             letter-spacing: 1.2px; color: #555; margin: 12px 0 8px;
-                             padding-bottom: 4px; border-bottom: 1px solid #e0e0e0; }
-            ul { list-style: none; }
-            li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex;
-                 align-items: center; gap: 12px; font-size: 15px; }
-            li:last-child { border-bottom: none; }
-            .checkbox { width: 18px; height: 18px; border: 2px solid #ccc; border-radius: 4px;
-                        flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-            .done .checkbox { border-color: #4caf50; background: #4caf50; }
-            .done .checkbox::after { content: '\2713'; color: white; font-size: 12px; font-weight: 700; }
-            .done .text { color: #999; text-decoration: line-through; }
-            .summary { margin-top: 32px; padding: 16px; border-top: 2px solid #e0e0e0;
-                       font-size: 14px; color: #666; display: flex; gap: 24px; }
-            .summary span { font-weight: 600; color: #333; }
-            .empty { color: #aaa; font-style: italic; padding: 12px 0; }
-            @media print { body { margin: 20px auto; } }
-            """);
-        sb.AppendLine("</style></head><body>");
-        sb.AppendLine($"<h1>\u2611 YATODOL</h1>");
-
-        var subtitle = allDates ? "All dates" : _selectedDate.ToString("MMMM d, yyyy");
-        if (remainingOnly) subtitle += " \u2014 remaining only";
-        sb.AppendLine($"<p class='subtitle'>{WebUtility.HtmlEncode(subtitle)}</p>");
-
-        if (items.Count == 0)
-        {
-            sb.AppendLine("<p class='empty'>No tasks to display.</p>");
-        }
-        else if (allDates)
-        {
-            // Group by date
-            var groups = items.OrderBy(i => i.Date).ThenBy(i => i.IsDone).GroupBy(i => i.Date.Date);
-            foreach (var group in groups)
-            {
-                sb.AppendLine($"<div class='day-header'>{WebUtility.HtmlEncode(group.Key.ToString("dddd, MMMM d, yyyy"))}</div>");
-                RenderItemList(sb, group.ToList(), remainingOnly);
-            }
-        }
-        else
-        {
-            RenderItemList(sb, items, remainingOnly);
-        }
-
-        // Summary
-        var totalAll = allDates ? _allItems.Count : _allItems.Count(i => i.Date.Date == _selectedDate.Date);
-        var activeAll = allDates ? _allItems.Count(i => !i.IsDone) : _allItems.Count(i => i.Date.Date == _selectedDate.Date && !i.IsDone);
-        var doneAll = totalAll - activeAll;
-        sb.AppendLine($"<div class='summary'>" +
-            $"<div>Total: <span>{totalAll}</span></div>" +
-            $"<div>Active: <span>{activeAll}</span></div>" +
-            $"<div>Completed: <span>{doneAll}</span></div></div>");
-        sb.AppendLine("</body></html>");
-
+        var html = PrintService.GenerateHtml(items, _allItems, _settings, _selectedDate);
         var printPath = Path.Combine(Path.GetTempPath(), "yatodol-print.html");
-        File.WriteAllText(printPath, sb.ToString());
+        File.WriteAllText(printPath, html);
         Process.Start(new ProcessStartInfo(printPath) { UseShellExecute = true });
-    }
-
-    private static void RenderItemList(StringBuilder sb, List<TodoItem> items, bool remainingOnly)
-    {
-        var active = items.Where(i => !i.IsDone).ToList();
-        var done = items.Where(i => i.IsDone).ToList();
-
-        if (active.Count > 0)
-        {
-            sb.AppendLine("<div class='section'>");
-            sb.AppendLine("<div class='section-title'>Active</div><ul>");
-            foreach (var item in active)
-                sb.AppendLine($"<li><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span></li>");
-            sb.AppendLine("</ul></div>");
-        }
-
-        if (!remainingOnly && done.Count > 0)
-        {
-            sb.AppendLine("<div class='section'>");
-            sb.AppendLine("<div class='section-title'>Completed</div><ul>");
-            foreach (var item in done)
-                sb.AppendLine($"<li class='done'><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span></li>");
-            sb.AppendLine("</ul></div>");
-        }
-    }
-
-    private void Save()
-    {
-        var dir = Path.GetDirectoryName(SavePath)!;
-        Directory.CreateDirectory(dir);
-        var json = JsonSerializer.Serialize(_allItems.ToList());
-        File.WriteAllText(SavePath, json);
-    }
-
-    private void Load()
-    {
-        if (!File.Exists(SavePath)) return;
-        try
-        {
-            var json = File.ReadAllText(SavePath);
-            var items = JsonSerializer.Deserialize<List<TodoItem>>(json);
-            if (items is null) return;
-            foreach (var item in items)
-                _allItems.Add(item);
-        }
-        catch { /* ignore corrupt file */ }
     }
 }

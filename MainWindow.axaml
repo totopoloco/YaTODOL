@@ -11,7 +11,7 @@
     <DockPanel Margin="16">
         <!-- Header -->
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-            <TextBlock Text="Yet Another To Do List"
+            <TextBlock x:Name="HeaderLabel" Text="Yet Another To Do List"
                        FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                         VerticalAlignment="Center">
@@ -21,8 +21,8 @@
                                     IsTodayHighlighted="True"/>
                 <Button x:Name="NextDayButton" Content="▶" Click="OnNextDay"
                         Padding="6,4" FontSize="12"/>
-                <Button Content="Today" Click="OnTodayClick" Padding="8,4"/>
-                <Button Content="🗑" Click="OnDeleteDateClick" Padding="6,4"
+                <Button x:Name="TodayButton" Content="Today" Click="OnTodayClick" Padding="8,4"/>
+                <Button x:Name="DeleteDateButton" Content="🗑" Click="OnDeleteDateClick" Padding="6,4"
                         FontSize="12" ToolTip.Tip="Delete all tasks for selected date"/>
             </StackPanel>
         </Grid>
@@ -37,18 +37,22 @@
                     VerticalAlignment="Stretch"/>
         </Grid>
 
+        <!-- Warning label -->
+        <TextBlock x:Name="WarningLabel" DockPanel.Dock="Top" Foreground="#e74c3c"
+                   FontSize="12" Margin="0,0,0,8" IsVisible="False"/>
+
         <!-- Status -->
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
             <TextBlock x:Name="CountLabel" Foreground="Gray"
                        VerticalAlignment="Center"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button Content="🖨 Print" Click="OnPrintClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
-                <Button Content="📥 Import" Click="OnImportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
-                <Button Content="📤 Export" Click="OnExportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
-                <Button Content="📅 iCal" Click="OnICalExportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"
+                <Button x:Name="PrintButton" Content="🖨 Print" Click="OnPrintClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+                <Button x:Name="ImportButton" Content="📥 Import" Click="OnImportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+                <Button x:Name="ExportButton" Content="📤 Export" Click="OnExportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+                <Button x:Name="ICalButton" Content="📅 iCal" Click="OnICalExportClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"
                         ToolTip.Tip="Export tasks to iCalendar (.ics)"/>
-                <Button Content="⚙ Settings" Click="OnSettingsClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
-                <Button Content="ℹ" Click="OnAboutClick" Padding="6,4"
+                <Button x:Name="SettingsButton" Content="⚙ Settings" Click="OnSettingsClick" VerticalAlignment="Stretch" VerticalContentAlignment="Center"/>
+                <Button x:Name="AboutButton" Content="ℹ" Click="OnAboutClick" Padding="6,4"
                         FontSize="12" ToolTip.Tip="About YaTODOL"/>
             </StackPanel>
         </Grid>

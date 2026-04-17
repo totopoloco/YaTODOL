@@ -17,6 +17,19 @@ public partial class ICalExportWindow : Window
     public ICalExportWindow()
     {
         InitializeComponent();
+        ApplyLocalization();
+    }
+
+    private void ApplyLocalization()
+    {
+        Title = Strings.ICalWindowTitle;
+        ICalTitleText.Text = Strings.ICalTitle;
+        ICalSubtitleText.Text = Strings.ICalSubtitle;
+        ICalCancelButton.Content = Strings.ButtonCancel;
+        ICalExportButton.Content = Strings.ButtonExport;
+        SelectAllButton.Content = Strings.ButtonSelectAll;
+        SelectNoneButton.Content = Strings.ButtonSelectNone;
+        UncompletedOnlyButton.Content = Strings.ButtonUncompletedOnly;
     }
 
     public void LoadItems(IEnumerable<TodoItem> items)
@@ -30,7 +43,7 @@ public partial class ICalExportWindow : Window
             var header = new TextBlock
             {
                 Text = group.Key == DateTime.Today
-                    ? $"Today — {group.Key:ddd, MMM d}"
+                    ? $"{Strings.TodayPrefix}{group.Key:ddd, MMM d}"
                     : group.Key.ToString("ddd, MMM d, yyyy"),
                 FontWeight = FontWeight.SemiBold,
                 FontSize = 13,

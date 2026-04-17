@@ -19,7 +19,7 @@
             <TextBlock x:Name="VersionLabel" Text="Version"
                        Foreground="Gray" FontSize="13"
                        HorizontalAlignment="Center" Margin="0,4,0,0"/>
-            <TextBlock Text="Yet another todo list"
+            <TextBlock x:Name="AboutSubtitleText" Text="Yet another todo list"
                        Foreground="Gray" FontSize="12"
                        HorizontalAlignment="Center" Margin="0,2,0,0"/>
         </StackPanel>
@@ -27,7 +27,7 @@
         <!-- Close button -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
                     HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Close" Click="OnCloseClick" Width="90" Padding="12,8"/>
+            <Button x:Name="CloseButton" Content="Close" Click="OnCloseClick" Width="90" Padding="12,8"/>
         </StackPanel>
 
         <!-- Release notes -->

@@ -8,6 +8,7 @@ public class TodoItem : INotifyPropertyChanged
     private string _title = string.Empty;
     private bool _isDone;
     private DateTime _date = DateTime.Today;
+    private string? _note;
 
     public string Title
     {
@@ -26,6 +27,14 @@ public class TodoItem : INotifyPropertyChanged
         get => _date;
         set { _date = value; OnPropertyChanged(nameof(Date)); }
     }
+
+    public string? Note
+    {
+        get => _note;
+        set { _note = value; OnPropertyChanged(nameof(Note)); OnPropertyChanged(nameof(HasNote)); }
+    }
+
+    public bool HasNote => !string.IsNullOrWhiteSpace(_note);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
