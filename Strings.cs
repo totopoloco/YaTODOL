@@ -360,6 +360,56 @@ public static class Strings
         _                   => "Interface language"
     };
 
+    // ─── Data Storage Settings ──────────────────────────────────────────────
+
+    public static string SectionStorage => _language switch
+    {
+        AppLanguage.Spanish => "Almacenamiento de datos",
+        AppLanguage.German  => "Datenspeicherung",
+        AppLanguage.French  => "Stockage des données",
+        _                   => "Data Storage"
+    };
+
+    public static string CustomPathLabel => _language switch
+    {
+        AppLanguage.Spanish => "Usar carpeta de datos personalizada",
+        AppLanguage.German  => "Benutzerdefinierten Datenordner verwenden",
+        AppLanguage.French  => "Utiliser un dossier de données personnalisé",
+        _                   => "Use custom data folder"
+    };
+
+    public static string CustomPathDesc => _language switch
+    {
+        AppLanguage.Spanish => "Guarda todos.json en una ubicación personalizada (p. ej. una carpeta de red compartida)",
+        AppLanguage.German  => "Speichert todos.json an einem benutzerdefinierten Ort (z. B. ein gemeinsamer Netzwerkordner)",
+        AppLanguage.French  => "Stocke todos.json dans un emplacement personnalisé (ex. un dossier réseau partagé)",
+        _                   => "Store todos.json in a custom location (e.g. a shared network folder)"
+    };
+
+    public static string ButtonBrowse => _language switch
+    {
+        AppLanguage.Spanish => "📁 Explorar",
+        AppLanguage.German  => "📁 Durchsuchen",
+        AppLanguage.French  => "📁 Parcourir",
+        _                   => "📁 Browse"
+    };
+
+    public static string CustomPathPlaceholder => _language switch
+    {
+        AppLanguage.Spanish => "Selecciona una carpeta...",
+        AppLanguage.German  => "Ordner auswählen...",
+        AppLanguage.French  => "Sélectionner un dossier...",
+        _                   => "Select a folder..."
+    };
+
+    public static string BrowseFolderTitle => _language switch
+    {
+        AppLanguage.Spanish => "Seleccionar carpeta de datos",
+        AppLanguage.German  => "Datenordner auswählen",
+        AppLanguage.French  => "Sélectionner le dossier de données",
+        _                   => "Select data folder"
+    };
+
     // ─── About Window ───────────────────────────────────────────────────────
 
     public static string AboutWindowTitle => _language switch

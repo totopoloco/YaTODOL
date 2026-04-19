@@ -38,6 +38,8 @@ public class AppSettings
     public PrintScope PrintScope { get; set; } = PrintScope.SelectedDate;
     public PrintFilter PrintFilter { get; set; } = PrintFilter.AllItems;
     public AppLanguage Language { get; set; } = AppLanguage.English;
+    public bool UseCustomDataPath { get; set; }
+    public string CustomDataPath { get; set; } = string.Empty;
 }
 
 public class ExportData

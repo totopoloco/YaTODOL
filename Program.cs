@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using System.Runtime.InteropServices;
 
 namespace YATODOL;
 
@@ -9,8 +10,21 @@ class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        // Workaround: IBus on Linux intercepts dead-key compose sequences,
+        // preventing accented characters (á, ó, ê, …) from reaching Avalonia.
+        // Clearing these variables lets XIM handle composition directly.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            Environment.SetEnvironmentVariable("GTK_IM_MODULE", "");
+            Environment.SetEnvironmentVariable("QT_IM_MODULE", "");
+            Environment.SetEnvironmentVariable("XMODIFIERS", "");
+        }
+
+        BuildAvaloniaApp()
+            .StartWithClassicDesktopLifetime(args);
+    }
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()

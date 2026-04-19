@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="620"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="680"
         x:Class="YATODOL.SettingsWindow"
-        Title="Settings" Width="460" Height="680"
+        Title="Settings" Width="500" Height="740"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Icon="avares://YATODOL/app-icon.png">
@@ -26,7 +26,7 @@
 
         <!-- Settings list (fills remaining space) -->
         <ScrollViewer>
-            <StackPanel Spacing="20">
+            <StackPanel Spacing="20" Margin="0,0,16,0">
 
                 <!-- Appearance section -->
                 <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
@@ -70,6 +70,30 @@
                                            Foreground="Gray" FontSize="11"/>
                             </StackPanel>
                         </CheckBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Data Storage section -->
+                <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="6">
+                        <TextBlock x:Name="StorageSectionText" Text="Data Storage" FontWeight="SemiBold" FontSize="14"
+                                   Margin="0,0,0,6"/>
+                        <CheckBox x:Name="CustomPathCheck" Click="OnCustomPathCheckChanged">
+                            <StackPanel Spacing="2">
+                                <TextBlock x:Name="CustomPathLabelText" Text="Use custom data folder"/>
+                                <TextBlock x:Name="CustomPathDescText"
+                                           Text="Store todos.json in a custom location (e.g. a shared network folder)"
+                                           Foreground="Gray" FontSize="11"/>
+                            </StackPanel>
+                        </CheckBox>
+                        <Grid x:Name="CustomPathPanel" ColumnDefinitions="*,Auto" Margin="28,4,0,0"
+                              IsVisible="False">
+                            <TextBox x:Name="CustomPathBox" IsReadOnly="True"
+                                     PlaceholderText="Select a folder..." Grid.Column="0"
+                                     Margin="0,0,8,0"/>
+                            <Button x:Name="BrowseButton" Content="📁 Browse" Grid.Column="1"
+                                    Click="OnBrowseClick" Padding="8,6"/>
+                        </Grid>
                     </StackPanel>
                 </Border>
 

@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 
 namespace YATODOL;
 
@@ -8,10 +10,12 @@ public partial class SettingsWindow : Window
     public AppSettings Result { get; private set; } = new();
 
     private AppLanguage _previousLanguage = AppLanguage.English;
+    private bool _closedByButton;
 
     public SettingsWindow()
     {
         InitializeComponent();
+        Closing += OnWindowClosing;
 
         // Populate language ComboBox with native language names
         foreach (var name in Strings.LanguageNames)
@@ -37,6 +41,9 @@ public partial class SettingsWindow : Window
         FilterAll.IsChecked = settings.PrintFilter == PrintFilter.AllItems;
         FilterRemaining.IsChecked = settings.PrintFilter == PrintFilter.RemainingOnly;
         LanguageCombo.SelectedIndex = (int)settings.Language;
+        CustomPathCheck.IsChecked = settings.UseCustomDataPath;
+        CustomPathBox.Text = settings.CustomDataPath;
+        CustomPathPanel.IsVisible = settings.UseCustomDataPath;
     }
 
     private void OnLanguageChanged(object? sender, SelectionChangedEventArgs e)
@@ -75,6 +82,11 @@ public partial class SettingsWindow : Window
         FilterRemaining.Content = Strings.PrintFilterRemaining;
         LanguageSectionText.Text = Strings.SectionLanguage;
         LanguagePickerLabelText.Text = Strings.LanguagePickerLabel;
+        StorageSectionText.Text = Strings.SectionStorage;
+        CustomPathLabelText.Text = Strings.CustomPathLabel;
+        CustomPathDescText.Text = Strings.CustomPathDesc;
+        BrowseButton.Content = Strings.ButtonBrowse;
+        CustomPathBox.PlaceholderText = Strings.CustomPathPlaceholder;
     }
 
     private void OnSaveClick(object? sender, RoutedEventArgs e)
@@ -89,15 +101,46 @@ public partial class SettingsWindow : Window
             CarryForwardTasks = CarryForwardCheck.IsChecked == true,
             PrintScope = ScopeAllDates.IsChecked == true ? PrintScope.AllDates : PrintScope.SelectedDate,
             PrintFilter = FilterRemaining.IsChecked == true ? PrintFilter.RemainingOnly : PrintFilter.AllItems,
-            Language = LanguageCombo.SelectedIndex >= 0 ? (AppLanguage)LanguageCombo.SelectedIndex : AppLanguage.English
+            Language = LanguageCombo.SelectedIndex >= 0 ? (AppLanguage)LanguageCombo.SelectedIndex : AppLanguage.English,
+            UseCustomDataPath = CustomPathCheck.IsChecked == true,
+            CustomDataPath = CustomPathBox.Text ?? string.Empty
         };
+        _closedByButton = true;
         Close(true);
+    }
+
+    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    {
+        if (!_closedByButton)
+        {
+            // Treat OS close as Cancel
+            e.Cancel = true;
+        }
+    }
+
+    private void OnCustomPathCheckChanged(object? sender, RoutedEventArgs e)
+    {
+        CustomPathPanel.IsVisible = CustomPathCheck.IsChecked == true;
+    }
+
+    private async void OnBrowseClick(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = Strings.BrowseFolderTitle,
+            AllowMultiple = false
+        });
+        if (folders.Count > 0)
+        {
+            CustomPathBox.Text = folders[0].Path.LocalPath;
+        }
     }
 
     private void OnCancelClick(object? sender, RoutedEventArgs e)
     {
         // Restore language to what it was before this dialog was opened
         Strings.SetLanguage(_previousLanguage);
+        _closedByButton = true;
         Close(false);
     }
 }

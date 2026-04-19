@@ -17,6 +17,7 @@
 - **Import/Export** — backup and restore your data
 - **Date navigation** — previous/next day, jump to today, calendar date picker
 - **Settings** — hide completed dates, show file path in title, print preferences, language selection
+- **Custom data folder** — store todos.json in any location, including shared network folders
 
 ## Requirements
 
@@ -58,6 +59,8 @@ Application data is stored in:
 | macOS    | `~/Library/Application Support/YATODOL/` |
 
 Files: `todos.json` (tasks), `settings.json` (preferences).
+
+The default path can be overridden in Settings to use a custom folder (e.g. a shared network drive).
 
 ## Contributing
 

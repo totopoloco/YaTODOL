@@ -7,15 +7,51 @@ namespace YATODOL;
 
 public static class DataService
 {
-    public static readonly string SavePath = Path.Combine(
+    private static readonly string DefaultDataDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "YATODOL", "todos.json");
+        "YATODOL");
 
-    public static readonly string SettingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "YATODOL", "settings.json");
+    public static readonly string SettingsPath = Path.Combine(DefaultDataDir, "settings.json");
+
+    private static string _dataDir = DefaultDataDir;
+
+    public static string SavePath => Path.Combine(_dataDir, "todos.json");
 
     private static readonly JsonSerializerOptions IndentedOptions = new() { WriteIndented = true };
+
+    public static void ApplyCustomPath(AppSettings settings)
+    {
+        _dataDir = settings.UseCustomDataPath && !string.IsNullOrWhiteSpace(settings.CustomDataPath)
+            ? settings.CustomDataPath
+            : DefaultDataDir;
+    }
+
+    public static void MoveDataFile(string oldPath, AppSettings newSettings)
+    {
+        var newDir = newSettings.UseCustomDataPath && !string.IsNullOrWhiteSpace(newSettings.CustomDataPath)
+            ? newSettings.CustomDataPath
+            : DefaultDataDir;
+        var newPath = Path.Combine(newDir, "todos.json");
+
+        if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        Directory.CreateDirectory(newDir);
+
+        if (File.Exists(oldPath) && !File.Exists(newPath))
+        {
+            File.Copy(oldPath, newPath);
+            File.Delete(oldPath);
+        }
+        else if (File.Exists(oldPath) && File.Exists(newPath))
+        {
+            // Target already has a file — keep the source as backup
+            var backupPath = oldPath + ".bak";
+            File.Move(oldPath, backupPath, overwrite: true);
+        }
+
+        ApplyCustomPath(newSettings);
+    }
 
     public static List<TodoItem> LoadTodos()
     {

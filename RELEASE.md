@@ -1,3 +1,10 @@
+## 1.2.0
+
+- Added custom data folder option — store todos.json in any location (e.g. a shared network folder)
+- Data file is automatically moved when changing the storage path
+- New "Data Storage" section in Settings with folder picker
+- Localized in all supported languages (English, Spanish, German, French)
+
 ## 1.1.0
 
 - Added multi-language support (English, Spanish, German, French) with language picker in Settings

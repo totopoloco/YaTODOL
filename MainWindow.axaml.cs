@@ -34,6 +34,7 @@ public partial class MainWindow : Window
         DatePicker.SelectedDate = _selectedDate;
         DatePicker.SelectedDateChanged += OnDateChanged;
         _settings = DataService.LoadSettings();
+        DataService.ApplyCustomPath(_settings);
         Strings.SetLanguage(_settings.Language);
         ApplyTheme();
         ApplyLocalization();
@@ -260,8 +261,13 @@ public partial class MainWindow : Window
         var result = await win.ShowDialog<bool?>(this);
         if (result == true)
         {
+            var oldSavePath = DataService.SavePath;
             _settings = win.Result;
             Strings.SetLanguage(_settings.Language);
+
+            // Move todos.json if the data path changed
+            DataService.MoveDataFile(oldSavePath, _settings);
+
             ApplyTheme();
             ApplyLocalization();
             UpdateTitle();
