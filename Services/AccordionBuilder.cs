@@ -22,6 +22,7 @@ public class AccordionBuilder
     private readonly Action<object?, RoutedEventArgs> _onCheckChanged;
     private readonly Action<object?, RoutedEventArgs> _onDeleteClick;
     private readonly Action<object?, RoutedEventArgs> _onNoteClick;
+    private readonly Action<TodoItem, string> _onRenameComplete;
     private readonly DragReorderService _dragService;
 
     /// <summary>
@@ -31,15 +32,18 @@ public class AccordionBuilder
     /// <param name="onDeleteClick">Handler invoked when a task's delete button is clicked.</param>
     /// <param name="onNoteClick">Handler invoked when a task's note button is clicked.</param>
     /// <param name="onReorder">Callback receiving the reordered item and its new index.</param>
+    /// <param name="onRenameComplete">Callback invoked when a task is renamed, receiving the item and new title.</param>
     public AccordionBuilder(
         Action<object?, RoutedEventArgs> onCheckChanged,
         Action<object?, RoutedEventArgs> onDeleteClick,
         Action<object?, RoutedEventArgs> onNoteClick,
-        Action<TodoItem, int> onReorder)
+        Action<TodoItem, int> onReorder,
+        Action<TodoItem, string> onRenameComplete)
     {
         _onCheckChanged = onCheckChanged;
         _onDeleteClick = onDeleteClick;
         _onNoteClick = onNoteClick;
+        _onRenameComplete = onRenameComplete;
         _dragService = new DragReorderService(onReorder);
     }
 
@@ -136,8 +140,11 @@ public class AccordionBuilder
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0),
             TextWrapping = TextWrapping.Wrap,
-            TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null
+            TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null,
+            Cursor = new Cursor(StandardCursorType.Hand)
         };
+        ToolTip.SetTip(tb, Strings.TooltipRename);
+        tb.DoubleTapped += (_, _) => BeginInlineEdit(tb, item, row);
         cb.Click += (_, _) => tb.TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null;
         Grid.SetColumn(tb, 2);
 
@@ -173,5 +180,58 @@ public class AccordionBuilder
         row.Children.Add(noteBtn);
         row.Children.Add(del);
         return row;
+    }
+
+    private void BeginInlineEdit(TextBlock tb, TodoItem item, Grid row)
+    {
+        var editBox = new TextBox
+        {
+            Text = item.Title,
+            FontSize = tb.FontSize,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = tb.Margin,
+            Padding = new Thickness(4, 2)
+        };
+        Grid.SetColumn(editBox, Grid.GetColumn(tb));
+
+        row.Children.Remove(tb);
+        row.Children.Add(editBox);
+        editBox.Focus();
+        editBox.SelectAll();
+
+        var committed = false;
+
+        void Commit()
+        {
+            if (committed) return;
+            committed = true;
+
+            var newTitle = editBox.Text?.Trim();
+            row.Children.Remove(editBox);
+            row.Children.Add(tb);
+
+            if (!string.IsNullOrEmpty(newTitle) && newTitle != item.Title)
+            {
+                tb.Text = newTitle;
+                _onRenameComplete(item, newTitle);
+            }
+        }
+
+        editBox.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                Commit();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                committed = true;
+                row.Children.Remove(editBox);
+                row.Children.Add(tb);
+            }
+        };
+
+        editBox.LostFocus += (_, _) => Commit();
     }
 }

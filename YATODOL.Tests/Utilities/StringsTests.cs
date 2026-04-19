@@ -268,6 +268,7 @@ public class StringsTests : IDisposable
     {
         Strings.SetLanguage(lang);
         Assert.False(string.IsNullOrEmpty(Strings.TooltipDragReorder));
+        Assert.False(string.IsNullOrEmpty(Strings.TooltipRename));
         Assert.False(string.IsNullOrEmpty(Strings.SaveFailed));
     }
 }

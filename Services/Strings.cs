@@ -600,6 +600,14 @@ public static class Strings
         _                   => "Drag to reorder"
     };
 
+    public static string TooltipRename => _language switch
+    {
+        AppLanguage.Spanish => "Doble clic para renombrar",
+        AppLanguage.German  => "Doppelklicken zum Umbenennen",
+        AppLanguage.French  => "Double-cliquer pour renommer",
+        _                   => "Double-click to rename"
+    };
+
     public static string SaveFailed => _language switch
     {
         AppLanguage.Spanish => "No se pudo guardar. El archivo no es accesible.",

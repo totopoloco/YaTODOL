@@ -94,6 +94,47 @@ public class TodoItemTests
         Assert.Equal(5, item.SortOrder);
     }
 
+    [Fact]
+    public void Title_Rename_UpdatesTitleAndRaisesPropertyChanged()
+    {
+        var item = new TodoItem { Title = "Original task" };
+        var raised = AssertPropertyChanged(item, nameof(TodoItem.Title), () => item.Title = "Renamed task");
+
+        Assert.True(raised);
+        Assert.Equal("Renamed task", item.Title);
+    }
+
+    [Fact]
+    public void Title_Rename_ToSameValue_StillRaisesPropertyChanged()
+    {
+        var item = new TodoItem { Title = "Same" };
+        var raised = AssertPropertyChanged(item, nameof(TodoItem.Title), () => item.Title = "Same");
+
+        Assert.True(raised);
+        Assert.Equal("Same", item.Title);
+    }
+
+    [Fact]
+    public void Title_Rename_PreservesOtherProperties()
+    {
+        var item = new TodoItem
+        {
+            Title = "Buy groceries",
+            IsDone = true,
+            Date = new DateTime(2026, 4, 19),
+            Note = "Don't forget milk",
+            SortOrder = 3
+        };
+
+        item.Title = "Buy organic groceries";
+
+        Assert.Equal("Buy organic groceries", item.Title);
+        Assert.True(item.IsDone);
+        Assert.Equal(new DateTime(2026, 4, 19), item.Date);
+        Assert.Equal("Don't forget milk", item.Note);
+        Assert.Equal(3, item.SortOrder);
+    }
+
     private static bool AssertPropertyChanged(TodoItem item, string expectedProperty, Action action)
     {
         bool raised = false;

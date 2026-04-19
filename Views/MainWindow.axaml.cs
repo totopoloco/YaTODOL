@@ -37,7 +37,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        _accordionBuilder = new AccordionBuilder(OnCheckChanged, OnDeleteClick, OnNoteClick, OnReorder);
+        _accordionBuilder = new AccordionBuilder(OnCheckChanged, OnDeleteClick, OnNoteClick, OnReorder, OnRenameComplete);
         DatePicker.SelectedDate = _selectedDate;
         DatePicker.SelectedDateChanged += OnDateChanged;
         _settings = DataService.LoadSettings();
@@ -196,6 +196,12 @@ public partial class MainWindow : Window
 
         var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
         RebuildAccordion(expanded);
+        Save();
+    }
+
+    private void OnRenameComplete(TodoItem item, string newTitle)
+    {
+        item.Title = newTitle;
         Save();
     }
 
