@@ -30,7 +30,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        _accordionBuilder = new AccordionBuilder(OnCheckChanged, OnDeleteClick, OnNoteClick);
+        _accordionBuilder = new AccordionBuilder(OnCheckChanged, OnDeleteClick, OnNoteClick, OnReorder);
         DatePicker.SelectedDate = _selectedDate;
         DatePicker.SelectedDateChanged += OnDateChanged;
         _settings = DataService.LoadSettings();
@@ -78,13 +78,26 @@ public partial class MainWindow : Window
 
         var today = DateTime.Today;
         var moved = false;
+        var maxOrder = _allItems
+            .Where(i => i.Date.Date == today)
+            .Select(i => i.SortOrder)
+            .DefaultIfEmpty(-1)
+            .Max();
+
         foreach (var item in _allItems.Where(i => i.Date.Date < today && !i.IsDone))
         {
             item.Date = today;
+            item.SortOrder = ++maxOrder;
             moved = true;
         }
 
-        if (moved) DataService.SaveTodos(_allItems);
+        if (moved) Save();
+    }
+
+    private void Save()
+    {
+        if (!DataService.SaveTodos(_allItems))
+            ShowWarning(Strings.SaveFailed);
     }
 
     private void OnAddClick(object? sender, RoutedEventArgs e) => AddItem();
@@ -107,12 +120,17 @@ public partial class MainWindow : Window
         }
 
         HideWarning();
-        var item = new TodoItem { Title = text, Date = _selectedDate };
+        var maxSortOrder = _allItems
+            .Where(i => i.Date.Date == _selectedDate.Date)
+            .Select(i => i.SortOrder)
+            .DefaultIfEmpty(-1)
+            .Max();
+        var item = new TodoItem { Title = text, Date = _selectedDate, SortOrder = maxSortOrder + 1 };
         _allItems.Add(item);
         NewItemBox.Text = string.Empty;
         NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
         RebuildAccordion();
-        DataService.SaveTodos(_allItems);
+        Save();
         NewItemBox.Focus();
     }
 
@@ -139,7 +157,7 @@ public partial class MainWindow : Window
         {
             _allItems.Remove(item);
             RebuildAccordion();
-            DataService.SaveTodos(_allItems);
+            Save();
         }
     }
 
@@ -148,7 +166,30 @@ public partial class MainWindow : Window
         // Remember which dates are expanded
         var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
         RebuildAccordion(expanded);
-        DataService.SaveTodos(_allItems);
+        Save();
+    }
+
+    private void OnReorder(TodoItem draggedItem, int newIndex)
+    {
+        var date = draggedItem.Date.Date;
+        var dateItems = _allItems
+            .Where(i => i.Date.Date == date)
+            .OrderBy(i => i.SortOrder)
+            .ToList();
+
+        var oldIndex = dateItems.IndexOf(draggedItem);
+        if (oldIndex < 0 || oldIndex == newIndex) return;
+
+        dateItems.Remove(draggedItem);
+        newIndex = Math.Clamp(newIndex, 0, dateItems.Count);
+        dateItems.Insert(newIndex, draggedItem);
+
+        for (int i = 0; i < dateItems.Count; i++)
+            dateItems[i].SortOrder = i;
+
+        var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
+        RebuildAccordion(expanded);
+        Save();
     }
 
     private void OnDateChanged(object? sender, SelectionChangedEventArgs e)
@@ -191,7 +232,7 @@ public partial class MainWindow : Window
         foreach (var item in items)
             _allItems.Remove(item);
         RebuildAccordion();
-        DataService.SaveTodos(_allItems);
+        Save();
     }
 
     private void NavigateToDate(DateTime date)
@@ -219,7 +260,7 @@ public partial class MainWindow : Window
         {
             var date = group.Key;
             var isExpanded = expandedDates?.Contains(date) ?? date == _selectedDate.Date;
-            var expander = _accordionBuilder.CreateDateExpander(date, group.ToList(), isExpanded);
+            var expander = _accordionBuilder.CreateDateExpander(date, group.OrderBy(i => i.SortOrder).ToList(), isExpanded);
 
             expander.PropertyChanged += (s, e) =>
             {
@@ -249,7 +290,7 @@ public partial class MainWindow : Window
                 item.Note = win.ResultNote;
                 var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
                 RebuildAccordion(expanded);
-                DataService.SaveTodos(_allItems);
+                Save();
             }
         }
     }
@@ -399,7 +440,7 @@ public partial class MainWindow : Window
             DataService.SaveSettings(_settings);
             CarryForwardPastTasks();
             RebuildAccordion();
-            DataService.SaveTodos(_allItems);
+            Save();
         }
         catch { /* ignore invalid file */ }
     }

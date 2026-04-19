@@ -1,3 +1,10 @@
+## 1.3.0
+
+- Added drag-and-drop task reordering — rearrange tasks within a date by dragging the grip handle
+- Custom task order is persisted across sessions
+- Visual drop indicator shows insertion point during drag
+- Localized drag tooltip in all supported languages (English, Spanish, German, French)
+
 ## 1.2.0
 
 - Added custom data folder option — store todos.json in any location (e.g. a shared network folder)

@@ -8,6 +8,7 @@
 ## Features
 
 - **Date-based task organization** — tasks grouped by date with expandable accordion sections
+- **Drag-and-drop reordering** — rearrange tasks within a date by dragging them to any position
 - **Task notes** — attach plain-text notes to any task, visible in print output
 - **Carry forward** — automatically moves uncompleted past tasks to today at midnight
 - **Multi-language support** — English, Spanish, German, and French

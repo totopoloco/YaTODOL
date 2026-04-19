@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 
 namespace YATODOL;
 
@@ -64,11 +65,10 @@ public static class DataService
         catch { return []; }
     }
 
-    public static void SaveTodos(IEnumerable<TodoItem> items)
+    public static bool SaveTodos(IEnumerable<TodoItem> items)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(SavePath)!);
         var json = JsonSerializer.Serialize(new List<TodoItem>(items));
-        File.WriteAllText(SavePath, json);
+        return WriteWithRetry(SavePath, json);
     }
 
     public static AppSettings LoadSettings()
@@ -82,11 +82,10 @@ public static class DataService
         catch { return new AppSettings(); }
     }
 
-    public static void SaveSettings(AppSettings settings)
+    public static bool SaveSettings(AppSettings settings)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
         var json = JsonSerializer.Serialize(settings);
-        File.WriteAllText(SettingsPath, json);
+        return WriteWithRetry(SettingsPath, json);
     }
 
     public static string SerializeExport(ExportData data) =>
@@ -94,4 +93,28 @@ public static class DataService
 
     public static ExportData? DeserializeImport(string json) =>
         JsonSerializer.Deserialize<ExportData>(json);
+
+    private static bool WriteWithRetry(string path, string content, int maxRetries = 3)
+    {
+        for (int attempt = 0; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                var tempPath = path + ".tmp";
+                File.WriteAllText(tempPath, content);
+                File.Move(tempPath, path, overwrite: true);
+                return true;
+            }
+            catch (IOException) when (attempt < maxRetries)
+            {
+                Thread.Sleep(100 * (attempt + 1));
+            }
+            catch (IOException)
+            {
+                return false;
+            }
+        }
+        return false;
+    }
 }

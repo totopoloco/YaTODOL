@@ -586,6 +586,22 @@ public static class Strings
         _                   => "Note"
     };
 
+    public static string TooltipDragReorder => _language switch
+    {
+        AppLanguage.Spanish => "Arrastrar para reordenar",
+        AppLanguage.German  => "Ziehen zum Neuordnen",
+        AppLanguage.French  => "Glisser pour réorganiser",
+        _                   => "Drag to reorder"
+    };
+
+    public static string SaveFailed => _language switch
+    {
+        AppLanguage.Spanish => "No se pudo guardar. El archivo no es accesible.",
+        AppLanguage.German  => "Speichern fehlgeschlagen. Die Datei ist nicht erreichbar.",
+        AppLanguage.French  => "Échec de la sauvegarde. Le fichier est inaccessible.",
+        _                   => "Could not save. The file is not accessible."
+    };
+
     public static string NotePlaceholder => _language switch
     {
         AppLanguage.Spanish => "Escribe tu nota aquí...",

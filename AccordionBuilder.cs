@@ -4,6 +4,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -15,15 +16,18 @@ public class AccordionBuilder
     private readonly Action<object?, RoutedEventArgs> _onCheckChanged;
     private readonly Action<object?, RoutedEventArgs> _onDeleteClick;
     private readonly Action<object?, RoutedEventArgs> _onNoteClick;
+    private readonly DragReorderService _dragService;
 
     public AccordionBuilder(
         Action<object?, RoutedEventArgs> onCheckChanged,
         Action<object?, RoutedEventArgs> onDeleteClick,
-        Action<object?, RoutedEventArgs> onNoteClick)
+        Action<object?, RoutedEventArgs> onNoteClick,
+        Action<TodoItem, int> onReorder)
     {
         _onCheckChanged = onCheckChanged;
         _onDeleteClick = onDeleteClick;
         _onNoteClick = onNoteClick;
+        _dragService = new DragReorderService(onReorder);
     }
 
     public Expander CreateDateExpander(DateTime date, List<TodoItem> items, bool isExpanded)
@@ -74,10 +78,27 @@ public class AccordionBuilder
     {
         var row = new Grid
         {
-            ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto"),
+            ColumnDefinitions = ColumnDefinitions.Parse("Auto,Auto,*,Auto,Auto"),
             DataContext = item,
             Opacity = item.IsDone ? 0.5 : 1.0
         };
+
+        var grip = new Border
+        {
+            Child = new TextBlock
+            {
+                Text = "\u2807",
+                FontSize = 16,
+                Foreground = Brushes.Gray,
+                VerticalAlignment = VerticalAlignment.Center
+            },
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Padding = new Thickness(4, 0),
+            Background = Brushes.Transparent
+        };
+        ToolTip.SetTip(grip, Strings.TooltipDragReorder);
+        _dragService.AttachGrip(grip, row);
+        Grid.SetColumn(grip, 0);
 
         var cb = new CheckBox
         {
@@ -87,7 +108,7 @@ public class AccordionBuilder
         };
         cb.Click += (s, e) => _onCheckChanged(s, e);
         cb.Click += (_, _) => row.Opacity = item.IsDone ? 0.5 : 1.0;
-        Grid.SetColumn(cb, 0);
+        Grid.SetColumn(cb, 1);
 
         var tb = new TextBlock
         {
@@ -98,7 +119,7 @@ public class AccordionBuilder
             TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null
         };
         cb.Click += (_, _) => tb.TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null;
-        Grid.SetColumn(tb, 1);
+        Grid.SetColumn(tb, 2);
 
         var noteBtn = new Button
         {
@@ -111,7 +132,7 @@ public class AccordionBuilder
         };
         ToolTip.SetTip(noteBtn, Strings.TooltipNote);
         noteBtn.Click += (s, e) => _onNoteClick(s, e);
-        Grid.SetColumn(noteBtn, 2);
+        Grid.SetColumn(noteBtn, 3);
 
         var del = new Button
         {
@@ -124,8 +145,9 @@ public class AccordionBuilder
             Padding = new Thickness(6, 2)
         };
         del.Click += (s, e) => _onDeleteClick(s, e);
-        Grid.SetColumn(del, 3);
+        Grid.SetColumn(del, 4);
 
+        row.Children.Add(grip);
         row.Children.Add(cb);
         row.Children.Add(tb);
         row.Children.Add(noteBtn);

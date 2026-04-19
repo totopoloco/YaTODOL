@@ -9,6 +9,7 @@ public class TodoItem : INotifyPropertyChanged
     private bool _isDone;
     private DateTime _date = DateTime.Today;
     private string? _note;
+    private int _sortOrder;
 
     public string Title
     {
@@ -32,6 +33,12 @@ public class TodoItem : INotifyPropertyChanged
     {
         get => _note;
         set { _note = value; OnPropertyChanged(nameof(Note)); OnPropertyChanged(nameof(HasNote)); }
+    }
+
+    public int SortOrder
+    {
+        get => _sortOrder;
+        set { _sortOrder = value; OnPropertyChanged(nameof(SortOrder)); }
     }
 
     public bool HasNote => !string.IsNullOrWhiteSpace(_note);
