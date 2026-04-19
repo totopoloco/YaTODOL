@@ -1,9 +1,13 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using YATODOL.Views;
 
 namespace YATODOL;
 
+/// <summary>
+/// Avalonia application class. Loads XAML resources and creates the <see cref="MainWindow"/>.
+/// </summary>
 public partial class App : Application
 {
     public override void Initialize()

@@ -5,13 +5,21 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using YATODOL.Models;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Views;
 
+/// <summary>
+/// Modal dialog for selecting which to-do items to export as iCalendar (.ics) events.
+/// </summary>
 public partial class ICalExportWindow : Window
 {
     private readonly List<(CheckBox Check, TodoItem Item)> _rows = [];
 
+    /// <summary>
+    /// Gets the list of items the user selected for export after the dialog closes.
+    /// </summary>
     public List<TodoItem> SelectedItems { get; private set; } = [];
 
     public ICalExportWindow()
@@ -32,6 +40,10 @@ public partial class ICalExportWindow : Window
         UncompletedOnlyButton.Content = Strings.ButtonUncompletedOnly;
     }
 
+    /// <summary>
+    /// Populates the selection list with the given to-do items grouped by date.
+    /// </summary>
+    /// <param name="items">All available to-do items.</param>
     public void LoadItems(IEnumerable<TodoItem> items)
     {
         _rows.Clear();

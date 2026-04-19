@@ -3,9 +3,13 @@ using System.IO;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Views;
 
+/// <summary>
+/// Modal dialog displaying application version and release notes loaded from <c>RELEASE.md</c>.
+/// </summary>
 public partial class AboutWindow : Window
 {
     public AboutWindow()

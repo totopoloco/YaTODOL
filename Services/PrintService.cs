@@ -3,11 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using YATODOL.Models;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Services;
 
+/// <summary>
+/// Generates a self-contained HTML document for printing to-do items,
+/// with date grouping, active/completed sections, notes, and a summary footer.
+/// </summary>
 public static class PrintService
 {
+    /// <summary>
+    /// Generates a styled HTML document for printing tasks.
+    /// </summary>
+    /// <param name="items">The filtered list of items to render.</param>
+    /// <param name="allItems">All items (used for the summary counts).</param>
+    /// <param name="settings">Application settings controlling print scope and filter.</param>
+    /// <param name="selectedDate">The currently selected date in the UI.</param>
+    /// <returns>A complete HTML document string.</returns>
     public static string GenerateHtml(
         List<TodoItem> items,
         IEnumerable<TodoItem> allItems,

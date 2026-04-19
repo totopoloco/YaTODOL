@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="420"
-        x:Class="YATODOL.AboutWindow"
+        x:Class="YATODOL.Views.AboutWindow"
         Title="About YaTODOL" Width="480" Height="420"
         CanResize="False"
         WindowStartupLocation="CenterOwner"

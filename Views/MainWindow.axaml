@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="using:YATODOL"
         mc:Ignorable="d" d:DesignWidth="850" d:DesignHeight="600"
-        x:Class="YATODOL.MainWindow"
+        x:Class="YATODOL.Views.MainWindow"
         Icon="avares://YATODOL/app-icon.png"
         Title="YATODOL" Width="850" Height="600">
 

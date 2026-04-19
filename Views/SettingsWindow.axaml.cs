@@ -2,11 +2,20 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using YATODOL.Models;
+using YATODOL.Services;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Views;
 
+/// <summary>
+/// Modal settings dialog for configuring theme, language, print options, task behavior, and custom data path.
+/// </summary>
 public partial class SettingsWindow : Window
 {
+    /// <summary>
+    /// Gets the <see cref="AppSettings"/> built from the user's selections when the dialog is saved.
+    /// </summary>
     public AppSettings Result { get; private set; } = new();
 
     private AppLanguage _previousLanguage = AppLanguage.English;
@@ -26,6 +35,10 @@ public partial class SettingsWindow : Window
         ApplyLocalization();
     }
 
+    /// <summary>
+    /// Populates the dialog controls from the given settings.
+    /// </summary>
+    /// <param name="settings">The current application settings to display.</param>
     public void LoadFrom(AppSettings settings)
     {
         _previousLanguage = settings.Language;

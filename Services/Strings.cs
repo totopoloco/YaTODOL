@@ -1,4 +1,6 @@
-namespace YATODOL;
+using YATODOL.Models;
+
+namespace YATODOL.Utilities;
 
 /// <summary>
 /// Static localization provider. Call SetLanguage() once at startup and after language changes.
@@ -7,6 +9,10 @@ public static class Strings
 {
     private static AppLanguage _language = AppLanguage.English;
 
+    /// <summary>
+    /// Sets the active language for all localized string properties.
+    /// </summary>
+    /// <param name="lang">The language to use.</param>
     public static void SetLanguage(AppLanguage lang) => _language = lang;
 
     // Language names shown in their own language (order matches AppLanguage enum)

@@ -5,10 +5,22 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace YATODOL;
+namespace YATODOL.Services;
 
+/// <summary>
+/// Provides reusable modal confirmation dialogs.
+/// </summary>
 public static class DialogService
 {
+    /// <summary>
+    /// Shows a modal confirmation dialog with a message and two buttons.
+    /// </summary>
+    /// <param name="owner">The parent window for centering.</param>
+    /// <param name="title">The dialog window title.</param>
+    /// <param name="message">The message to display.</param>
+    /// <param name="confirmText">Text for the confirm button.</param>
+    /// <param name="cancelText">Text for the cancel button.</param>
+    /// <returns><c>true</c> if the user clicked confirm; otherwise <c>false</c>.</returns>
     public static async Task<bool> ShowConfirmDialog(
         Window owner, string title, string message,
         string confirmText, string cancelText)

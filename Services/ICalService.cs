@@ -1,11 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using YATODOL.Models;
 
-namespace YATODOL;
+namespace YATODOL.Services;
 
+/// <summary>
+/// Generates iCalendar (.ics) formatted strings from to-do items for calendar export.
+/// </summary>
 public static class ICalService
 {
+    /// <summary>
+    /// Generates a complete iCalendar string containing one all-day VEVENT per to-do item.
+    /// Completed items are prefixed with a checkmark, uncompleted with a ballot box.
+    /// </summary>
+    /// <param name="items">The to-do items to export.</param>
+    /// <returns>A valid iCalendar string.</returns>
     public static string GenerateICalString(IEnumerable<TodoItem> items)
     {
         var sb = new StringBuilder();

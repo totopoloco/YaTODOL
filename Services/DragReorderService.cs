@@ -3,9 +3,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using YATODOL.Models;
 
-namespace YATODOL;
+namespace YATODOL.Services;
 
+/// <summary>
+/// Handles pointer-based drag-and-drop reordering of to-do item rows within a <see cref="Avalonia.Controls.StackPanel"/>.
+/// Uses <see cref="Avalonia.Media.TranslateTransform"/> to provide visual displacement feedback during the drag.
+/// </summary>
 public class DragReorderService
 {
     private readonly Action<TodoItem, int> _onReorder;
@@ -18,11 +23,20 @@ public class DragReorderService
     private double _pointerStartY;
     private TranslateTransform? _dragTransform;
 
+    /// <summary>
+    /// Initializes a new <see cref="DragReorderService"/> with the specified reorder callback.
+    /// </summary>
+    /// <param name="onReorder">Callback invoked when a drag completes, receiving the moved item and its new index.</param>
     public DragReorderService(Action<TodoItem, int> onReorder)
     {
         _onReorder = onReorder;
     }
 
+    /// <summary>
+    /// Attaches drag event handlers to a grip control for reordering its parent row.
+    /// </summary>
+    /// <param name="grip">The grip <see cref="Border"/> the user drags.</param>
+    /// <param name="row">The <see cref="Grid"/> row to be reordered.</param>
     public void AttachGrip(Border grip, Grid row)
     {
         grip.PointerPressed += (s, e) =>

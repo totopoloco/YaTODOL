@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace YATODOL;
 
+/// <summary>
+/// Application entry point. Configures platform workarounds and starts the Avalonia desktop lifetime.
+/// </summary>
 class Program
 {
     // Initialization code. Don't use any Avalonia, third-party APIs or any

@@ -13,9 +13,16 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using YATODOL.Models;
+using YATODOL.Services;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Views;
 
+/// <summary>
+/// Primary application window containing the task accordion, date navigation,
+/// and all task management logic (add, delete, complete, reorder, import/export, print).
+/// </summary>
 public partial class MainWindow : Window
 {
     private readonly ObservableCollection<TodoItem> _allItems = new();

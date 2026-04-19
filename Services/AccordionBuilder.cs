@@ -8,9 +8,15 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using YATODOL.Models;
+using YATODOL.Utilities;
 
-namespace YATODOL;
+namespace YATODOL.Services;
 
+/// <summary>
+/// Builds the accordion UI of date-grouped expander panels containing to-do item rows
+/// with checkboxes, note buttons, delete buttons, and drag-reorder grips.
+/// </summary>
 public class AccordionBuilder
 {
     private readonly Action<object?, RoutedEventArgs> _onCheckChanged;
@@ -18,6 +24,13 @@ public class AccordionBuilder
     private readonly Action<object?, RoutedEventArgs> _onNoteClick;
     private readonly DragReorderService _dragService;
 
+    /// <summary>
+    /// Initializes a new <see cref="AccordionBuilder"/> with the specified event callbacks.
+    /// </summary>
+    /// <param name="onCheckChanged">Handler invoked when a task's checkbox is toggled.</param>
+    /// <param name="onDeleteClick">Handler invoked when a task's delete button is clicked.</param>
+    /// <param name="onNoteClick">Handler invoked when a task's note button is clicked.</param>
+    /// <param name="onReorder">Callback receiving the reordered item and its new index.</param>
     public AccordionBuilder(
         Action<object?, RoutedEventArgs> onCheckChanged,
         Action<object?, RoutedEventArgs> onDeleteClick,
@@ -30,6 +43,13 @@ public class AccordionBuilder
         _dragService = new DragReorderService(onReorder);
     }
 
+    /// <summary>
+    /// Creates an <see cref="Expander"/> control for a single date group containing all its to-do items.
+    /// </summary>
+    /// <param name="date">The date for this group.</param>
+    /// <param name="items">The to-do items assigned to this date.</param>
+    /// <param name="isExpanded">Whether the expander should be initially expanded.</param>
+    /// <returns>A configured <see cref="Expander"/> control.</returns>
     public Expander CreateDateExpander(DateTime date, List<TodoItem> items, bool isExpanded)
     {
         var remaining = items.Count(i => !i.IsDone);
