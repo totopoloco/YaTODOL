@@ -1,3 +1,17 @@
+## 1.4.0
+
+- Added tag support — assign color-coded tags to tasks to categorize and highlight them
+- Three built-in tags (Urgent, Important, Low) are always available and cannot be deleted
+- Built-in tags are mutually exclusive per task; only one may be assigned at a time
+- Custom tags can be created in Settings with a name and a color from the picker palette
+- Custom tags can be deleted unless they are currently assigned to at least one task
+- Tags are shown as colored chips on each task row in the main list
+- Tags are selectable in the note/tag editor dialog alongside the note text
+- Tags are included in print output as colored pills next to each task title
+- Tags are localized in all supported languages (English, Spanish, German, French)
+- Improved toolbar and note button icons: color-coded circular badge design for all action buttons
+- Softened overall color palette — all UI colors are now muted and easier on the eye
+
 ## 1.3.0
 
 - Added drag-and-drop task reordering — rearrange tasks within a date by dragging the grip handle

@@ -38,7 +38,7 @@
         </Grid>
 
         <!-- Warning label -->
-        <TextBlock x:Name="WarningLabel" DockPanel.Dock="Top" Foreground="#e74c3c"
+        <TextBlock x:Name="WarningLabel" DockPanel.Dock="Top" Foreground="#c0675e"
                    FontSize="12" Margin="0,0,0,8" IsVisible="False"/>
 
         <!-- Status -->

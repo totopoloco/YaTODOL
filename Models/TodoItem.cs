@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 
 namespace YATODOL.Models;
@@ -14,6 +15,7 @@ public class TodoItem : INotifyPropertyChanged
     private DateTime _date = DateTime.Today;
     private string? _note;
     private int _sortOrder;
+    private List<string> _tags = [];
 
     /// <summary>
     /// Gets or sets the task title text.
@@ -60,6 +62,20 @@ public class TodoItem : INotifyPropertyChanged
         get => _sortOrder;
         set { _sortOrder = value; OnPropertyChanged(nameof(SortOrder)); }
     }
+
+    /// <summary>
+    /// Gets or sets the list of tag name keys assigned to this task.
+    /// </summary>
+    public List<string> Tags
+    {
+        get => _tags;
+        set { _tags = value; OnPropertyChanged(nameof(Tags)); OnPropertyChanged(nameof(HasTags)); }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the task has at least one tag.
+    /// </summary>
+    public bool HasTags => _tags.Count > 0;
 
     /// <summary>
     /// Gets a value indicating whether the task has a non-empty note.

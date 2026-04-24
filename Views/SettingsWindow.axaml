@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="680"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="860"
         x:Class="YATODOL.Views.SettingsWindow"
-        Title="Settings" Width="500" Height="740"
+        Title="Settings" Width="500" Height="800"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Icon="avares://YATODOL/app-icon.png">
@@ -133,6 +133,44 @@
                         <TextBlock x:Name="LanguagePickerLabelText" Text="Interface language"
                                    FontSize="12" Foreground="Gray"/>
                         <ComboBox x:Name="LanguageCombo" HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tags section -->
+                <Border BorderBrush="#30888888" BorderThickness="1" CornerRadius="8" Padding="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="TagsSectionText" Text="🏷 Tags" FontWeight="SemiBold" FontSize="14"
+                                   Margin="0,0,0,2"/>
+
+                        <!-- Built-in tags (read-only display) -->
+                        <TextBlock x:Name="TagsBuiltInText" Text="Built-in (cannot be deleted)"
+                                   FontSize="11" Foreground="Gray"/>
+                        <WrapPanel x:Name="BuiltInTagsPanel" Margin="0,0,0,4"/>
+
+                        <Border Height="1" Background="#18888888"/>
+
+                        <!-- Custom tags list -->
+                        <TextBlock x:Name="TagsCustomText" Text="Custom" FontSize="11" Foreground="Gray"
+                                   Margin="0,4,0,0"/>
+                        <StackPanel x:Name="CustomTagsPanel" Spacing="4"/>
+
+                        <!-- Add new tag row -->
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+                            <TextBox x:Name="NewTagNameBox" Grid.Column="0"
+                                     Padding="8,6" Margin="0,0,8,0"
+                                     PlaceholderText="Tag name..."/>
+                            <Button x:Name="AddTagButton" Grid.Column="1"
+                                    Content="+ Add" Click="OnAddTagClick" Padding="10,6"/>
+                        </Grid>
+
+                        <!-- Color picker -->
+                        <TextBlock x:Name="TagsColorText" Text="Color:" FontSize="11" Foreground="Gray"
+                                   Margin="0,4,0,2"/>
+                        <WrapPanel x:Name="TagColorPicker"/>
+
+                        <!-- Duplicate warning -->
+                        <TextBlock x:Name="TagDuplicateWarning" FontSize="11" Foreground="#e74c3c"
+                                   IsVisible="False"/>
                     </StackPanel>
                 </Border>
 

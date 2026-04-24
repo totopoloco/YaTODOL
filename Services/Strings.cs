@@ -46,26 +46,34 @@ public static class Strings
 
     public static string ButtonPrint => _language switch
     {
-        AppLanguage.Spanish => "🖨 Imprimir",
-        AppLanguage.German  => "🖨 Drucken",
-        AppLanguage.French  => "🖨 Imprimer",
-        _                   => "🖨 Print"
+        AppLanguage.Spanish => "Imprimir",
+        AppLanguage.German  => "Drucken",
+        AppLanguage.French  => "Imprimer",
+        _                   => "Print"
     };
 
     public static string ButtonImport => _language switch
     {
-        AppLanguage.Spanish => "📥 Importar",
-        AppLanguage.German  => "📥 Importieren",
-        AppLanguage.French  => "📥 Importer",
-        _                   => "📥 Import"
+        AppLanguage.Spanish => "Importar",
+        AppLanguage.German  => "Importieren",
+        AppLanguage.French  => "Importer",
+        _                   => "Import"
     };
 
     public static string ButtonExport => _language switch
     {
-        AppLanguage.Spanish => "📤 Exportar",
-        AppLanguage.German  => "📤 Exportieren",
-        AppLanguage.French  => "📤 Exporter",
-        _                   => "📤 Export"
+        AppLanguage.Spanish => "Exportar",
+        AppLanguage.German  => "Exportieren",
+        AppLanguage.French  => "Exporter",
+        _                   => "Export"
+    };
+
+    public static string ButtonICal => _language switch
+    {
+        AppLanguage.Spanish => "iCal",
+        AppLanguage.German  => "iCal",
+        AppLanguage.French  => "iCal",
+        _                   => "iCal"
     };
 
     public static string TooltipICal => _language switch
@@ -78,10 +86,10 @@ public static class Strings
 
     public static string ButtonSettings => _language switch
     {
-        AppLanguage.Spanish => "⚙ Ajustes",
-        AppLanguage.German  => "⚙ Einstellungen",
-        AppLanguage.French  => "⚙ Paramètres",
-        _                   => "⚙ Settings"
+        AppLanguage.Spanish => "Ajustes",
+        AppLanguage.German  => "Einstellungen",
+        AppLanguage.French  => "Paramètres",
+        _                   => "Settings"
     };
 
     public static string TooltipAbout => _language switch
@@ -592,6 +600,22 @@ public static class Strings
         _                   => "Note"
     };
 
+    public static string TooltipAddNote => _language switch
+    {
+        AppLanguage.Spanish => "Agregar nota",
+        AppLanguage.German  => "Notiz hinzufugen",
+        AppLanguage.French  => "Ajouter une note",
+        _                   => "Add note"
+    };
+
+    public static string TooltipEditNote => _language switch
+    {
+        AppLanguage.Spanish => "Editar nota",
+        AppLanguage.German  => "Notiz bearbeiten",
+        AppLanguage.French  => "Modifier la note",
+        _                   => "Edit note"
+    };
+
     public static string TooltipDragReorder => _language switch
     {
         AppLanguage.Spanish => "Arrastrar para reordenar",
@@ -622,5 +646,128 @@ public static class Strings
         AppLanguage.German  => "Schreibe hier deine Notiz...",
         AppLanguage.French  => "Écrivez votre note ici...",
         _                   => "Write your note here..."
+    };
+
+    // ─── Tags ────────────────────────────────────────────────────────────────
+
+    /// <summary>Localized display name for the built-in "Urgent" tag.</summary>
+    public static string TagUrgent => _language switch
+    {
+        AppLanguage.Spanish => "Urgente",
+        AppLanguage.German  => "Dringend",
+        AppLanguage.French  => "Urgent",
+        _                   => "Urgent"
+    };
+
+    /// <summary>Localized display name for the built-in "Important" tag.</summary>
+    public static string TagImportant => _language switch
+    {
+        AppLanguage.Spanish => "Importante",
+        AppLanguage.German  => "Wichtig",
+        AppLanguage.French  => "Important",
+        _                   => "Important"
+    };
+
+    /// <summary>Localized display name for the built-in "Low" tag.</summary>
+    public static string TagLow => _language switch
+    {
+        AppLanguage.Spanish => "Baja prioridad",
+        AppLanguage.German  => "Niedrig",
+        AppLanguage.French  => "Faible",
+        _                   => "Low"
+    };
+
+    /// <summary>
+    /// Returns the localized display name for a tag: built-in tags are translated,
+    /// custom tags are returned as-is.
+    /// </summary>
+    public static string GetTagDisplayName(string tagName) => tagName switch
+    {
+        BuiltInTags.Urgent    => TagUrgent,
+        BuiltInTags.Important => TagImportant,
+        BuiltInTags.Low       => TagLow,
+        _                     => tagName
+    };
+
+    // Settings — Tags section
+    public static string SectionTags => _language switch
+    {
+        AppLanguage.Spanish => "🏷 Etiquetas",
+        AppLanguage.German  => "🏷 Etiketten",
+        AppLanguage.French  => "🏷 Étiquettes",
+        _                   => "🏷 Tags"
+    };
+
+    public static string TagsBuiltInHeader => _language switch
+    {
+        AppLanguage.Spanish => "Integradas (no se pueden eliminar)",
+        AppLanguage.German  => "Integriert (nicht löschbar)",
+        AppLanguage.French  => "Intégrées (non supprimables)",
+        _                   => "Built-in (cannot be deleted)"
+    };
+
+    public static string TagsCustomHeader => _language switch
+    {
+        AppLanguage.Spanish => "Personalizadas",
+        AppLanguage.German  => "Benutzerdefiniert",
+        AppLanguage.French  => "Personnalisées",
+        _                   => "Custom"
+    };
+
+    public static string TagsAddPlaceholder => _language switch
+    {
+        AppLanguage.Spanish => "Nombre de la etiqueta...",
+        AppLanguage.German  => "Etikettenname...",
+        AppLanguage.French  => "Nom de l'étiquette...",
+        _                   => "Tag name..."
+    };
+
+    public static string TagsAddButton => _language switch
+    {
+        AppLanguage.Spanish => "+ Añadir",
+        AppLanguage.German  => "+ Hinzufügen",
+        AppLanguage.French  => "+ Ajouter",
+        _                   => "+ Add"
+    };
+
+    public static string TagsDeleteTooltip => _language switch
+    {
+        AppLanguage.Spanish => "Eliminar etiqueta",
+        AppLanguage.German  => "Etikett löschen",
+        AppLanguage.French  => "Supprimer l'étiquette",
+        _                   => "Delete tag"
+    };
+
+    public static string TagsInUseTooltip => _language switch
+    {
+        AppLanguage.Spanish => "No se puede eliminar: la etiqueta está asignada a una o más tareas",
+        AppLanguage.German  => "Kann nicht gelöscht werden: Etikett ist einer oder mehreren Aufgaben zugewiesen",
+        AppLanguage.French  => "Impossible de supprimer : l'étiquette est assignée à une ou plusieurs tâches",
+        _                   => "Cannot delete: tag is assigned to one or more tasks"
+    };
+
+    public static string TagsColorLabel => _language switch
+    {
+        AppLanguage.Spanish => "Color:",
+        AppLanguage.German  => "Farbe:",
+        AppLanguage.French  => "Couleur :",
+        _                   => "Color:"
+    };
+
+    public static string TagsDuplicateWarning => _language switch
+    {
+        AppLanguage.Spanish => "Ya existe una etiqueta con ese nombre.",
+        AppLanguage.German  => "Ein Etikett mit diesem Namen existiert bereits.",
+        AppLanguage.French  => "Une étiquette avec ce nom existe déjà.",
+        _                   => "A tag with that name already exists."
+    };
+
+    // Note editor — tags section
+    public static string NoteEditorTagsLabel => _language switch
+    {
+        AppLanguage.Spanish => "Etiquetas",
+        AppLanguage.German  => "Etiketten",
+        AppLanguage.French  => "Étiquettes",
+        _                   => "Tags"
     };
 }

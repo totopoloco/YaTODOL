@@ -26,6 +26,12 @@ public class AccordionBuilder
     private readonly DragReorderService _dragService;
 
     /// <summary>
+    /// All tag definitions (built-in + custom) used to look up colors for chip display.
+    /// Set this before calling <see cref="CreateDateExpander"/>.
+    /// </summary>
+    public IEnumerable<TagDefinition> Tags { get; set; } = [];
+
+    /// <summary>
     /// Initializes a new <see cref="AccordionBuilder"/> with the specified event callbacks.
     /// </summary>
     /// <param name="onCheckChanged">Handler invoked when a task's checkbox is toggled.</param>
@@ -134,30 +140,61 @@ public class AccordionBuilder
         cb.Click += (_, _) => row.Opacity = item.IsDone ? 0.5 : 1.0;
         Grid.SetColumn(cb, 1);
 
+        // Content panel: title text + optional tag chips below
+        var contentPanel = new StackPanel
+        {
+            Spacing = 3,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 2, 8, 2)
+        };
+
         var tb = new TextBlock
         {
             Text = item.Title,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0),
             TextWrapping = TextWrapping.Wrap,
             TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null,
             Cursor = new Cursor(StandardCursorType.Hand)
         };
         ToolTip.SetTip(tb, Strings.TooltipRename);
-        tb.DoubleTapped += (_, _) => BeginInlineEdit(tb, item, row);
+        tb.DoubleTapped += (_, _) => BeginInlineEdit(tb, item, row, contentPanel);
         cb.Click += (_, _) => tb.TextDecorations = item.IsDone ? TextDecorations.Strikethrough : null;
-        Grid.SetColumn(tb, 2);
+
+        contentPanel.Children.Add(tb);
+
+        if (item.Tags.Count > 0)
+            contentPanel.Children.Add(BuildTagChips(item.Tags));
+
+        Grid.SetColumn(contentPanel, 2);
 
         var noteBtn = new Button
         {
-            Content = item.HasNote ? "\U0001f4dd" : "\U0001f4cb",
+            Content = new Border
+            {
+                Width = 24,
+                Height = 24,
+                CornerRadius = new CornerRadius(12),
+                Background = item.HasNote
+                    ? new SolidColorBrush(Color.Parse("#4a9080"))
+                    : new SolidColorBrush(Color.Parse("#b07840")),
+                Child = new TextBlock
+                {
+                    Text = item.HasNote ? "✎" : "+",
+                    Foreground = Brushes.White,
+                    FontSize = 14,
+                    FontWeight = FontWeight.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextAlignment = TextAlignment.Center
+                }
+            },
             DataContext = item,
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
-            FontSize = 13,
+            FontSize = 14,
             Padding = new Thickness(4, 2)
         };
-        ToolTip.SetTip(noteBtn, Strings.TooltipNote);
+        ToolTip.SetTip(noteBtn, item.HasNote ? Strings.TooltipEditNote : Strings.TooltipAddNote);
         noteBtn.Click += (s, e) => _onNoteClick(s, e);
         Grid.SetColumn(noteBtn, 3);
 
@@ -176,25 +213,58 @@ public class AccordionBuilder
 
         row.Children.Add(grip);
         row.Children.Add(cb);
-        row.Children.Add(tb);
+        row.Children.Add(contentPanel);
         row.Children.Add(noteBtn);
         row.Children.Add(del);
         return row;
     }
 
-    private void BeginInlineEdit(TextBlock tb, TodoItem item, Grid row)
+    /// <summary>Builds a WrapPanel of colored tag chip badges for the given tag keys.</summary>
+    private WrapPanel BuildTagChips(List<string> tags)
+    {
+        var wrap = new WrapPanel { Margin = new Thickness(0, 1, 0, 1) };
+        foreach (var tagName in tags)
+        {
+            var brush = GetTagBrush(tagName);
+            wrap.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(10),
+                Background = brush,
+                Padding = new Thickness(6, 2),
+                Margin = new Thickness(0, 0, 4, 2),
+                Child = new TextBlock
+                {
+                    Text = Strings.GetTagDisplayName(tagName),
+                    Foreground = Brushes.White,
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            });
+        }
+        return wrap;
+    }
+
+    private IBrush GetTagBrush(string tagName)
+    {
+        var def = Tags.FirstOrDefault(t => t.Name == tagName)
+               ?? BuiltInTags.All.FirstOrDefault(t => t.Name == tagName);
+        return new SolidColorBrush(Color.Parse(def?.Color ?? "#888888"));
+    }
+
+    private void BeginInlineEdit(TextBlock tb, TodoItem item, Grid row, StackPanel contentPanel)
     {
         var editBox = new TextBox
         {
             Text = item.Title,
             FontSize = tb.FontSize,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = tb.Margin,
+            Margin = contentPanel.Margin,
             Padding = new Thickness(4, 2)
         };
-        Grid.SetColumn(editBox, Grid.GetColumn(tb));
+        Grid.SetColumn(editBox, 2);
 
-        row.Children.Remove(tb);
+        row.Children.Remove(contentPanel);
         row.Children.Add(editBox);
         editBox.Focus();
         editBox.SelectAll();
@@ -208,7 +278,7 @@ public class AccordionBuilder
 
             var newTitle = editBox.Text?.Trim();
             row.Children.Remove(editBox);
-            row.Children.Add(tb);
+            row.Children.Add(contentPanel);
 
             if (!string.IsNullOrEmpty(newTitle) && newTitle != item.Title)
             {
@@ -228,7 +298,7 @@ public class AccordionBuilder
             {
                 committed = true;
                 row.Children.Remove(editBox);
-                row.Children.Add(tb);
+                row.Children.Add(contentPanel);
             }
         };
 

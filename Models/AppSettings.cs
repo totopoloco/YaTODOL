@@ -1,6 +1,42 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace YATODOL.Models;
+
+/// <summary>
+/// Represents a user-defined tag with a name and a hex color string.
+/// </summary>
+public class TagDefinition
+{
+    /// <summary>Gets or sets the canonical tag name (storage key).</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the tag color as a hex string, e.g. "#3498db".</summary>
+    public string Color { get; set; } = "#888888";
+}
+
+/// <summary>
+/// Provides the three built-in, non-deletable tags.
+/// </summary>
+public static class BuiltInTags
+{
+    public const string Urgent    = "Urgent";
+    public const string Important = "Important";
+    public const string Low       = "Low";
+
+    /// <summary>All built-in tag definitions (fixed color, fixed name key).</summary>
+    public static readonly IReadOnlyList<TagDefinition> All =
+    [
+        new TagDefinition { Name = Urgent,    Color = "#b06060" },
+        new TagDefinition { Name = Important, Color = "#b07840" },
+        new TagDefinition { Name = Low,       Color = "#4a8060" }
+    ];
+
+    /// <summary>Returns true when <paramref name="name"/> matches a built-in tag key.</summary>
+    public static bool IsBuiltIn(string name) => name is Urgent or Important or Low;
+}
+
+
 
 /// <summary>
 /// Specifies the application color theme.
@@ -83,6 +119,13 @@ public class AppSettings
 
     /// <summary>Gets or sets the custom directory path for data file storage.</summary>
     public string CustomDataPath { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets user-defined custom tags (built-in tags are not stored here).</summary>
+    public List<TagDefinition> CustomTags { get; set; } = [];
+
+    /// <summary>Returns all tags: built-in first, then custom.</summary>
+    public IEnumerable<TagDefinition> GetAllTags() =>
+        BuiltInTags.All.Concat(CustomTags);
 }
 
 /// <summary>

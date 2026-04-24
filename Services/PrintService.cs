@@ -26,7 +26,8 @@ public static class PrintService
         List<TodoItem> items,
         IEnumerable<TodoItem> allItems,
         AppSettings settings,
-        DateTime selectedDate)
+        DateTime selectedDate,
+        IEnumerable<TagDefinition>? allTags = null)
     {
         var allDates = settings.PrintScope == PrintScope.AllDates;
         var remainingOnly = settings.PrintFilter == PrintFilter.RemainingOnly;
@@ -63,6 +64,9 @@ public static class PrintService
                     border-left: 3px solid #4a6cf7; border-radius: 0 6px 6px 0;
                     font-size: 13px; color: #555; white-space: pre-wrap; line-height: 1.5; }
             .done .note { border-left-color: #ccc; }
+            .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+            .tag { display: inline-block; padding: 2px 8px; border-radius: 10px;
+                   font-size: 11px; font-weight: 600; color: white; white-space: nowrap; }
             .summary { margin-top: 32px; padding: 16px; border-top: 2px solid #e0e0e0;
                        font-size: 14px; color: #666; display: flex; gap: 24px; }
             .summary span { font-weight: 600; color: #333; }
@@ -76,6 +80,9 @@ public static class PrintService
         if (remainingOnly) subtitle += Strings.PrintRemainingOnly;
         sb.AppendLine($"<p class='subtitle'>{WebUtility.HtmlEncode(subtitle)}</p>");
 
+        var tagLookup = (allTags ?? Enumerable.Empty<TagDefinition>())
+            .ToDictionary(t => t.Name, t => t.Color);
+
         if (items.Count == 0)
         {
             sb.AppendLine($"<p class='empty'>{WebUtility.HtmlEncode(Strings.PrintNoTasks)}</p>");
@@ -86,12 +93,12 @@ public static class PrintService
             foreach (var group in groups)
             {
                 sb.AppendLine($"<div class='day-header'>{WebUtility.HtmlEncode(group.Key.ToString("dddd, MMMM d, yyyy"))}</div>");
-                RenderItemList(sb, group.ToList(), remainingOnly);
+                RenderItemList(sb, group.ToList(), remainingOnly, tagLookup);
             }
         }
         else
         {
-            RenderItemList(sb, items, remainingOnly);
+            RenderItemList(sb, items, remainingOnly, tagLookup);
         }
 
         var allItemsList = allItems.ToList();
@@ -107,7 +114,8 @@ public static class PrintService
         return sb.ToString();
     }
 
-    private static void RenderItemList(StringBuilder sb, List<TodoItem> items, bool remainingOnly)
+    private static void RenderItemList(StringBuilder sb, List<TodoItem> items, bool remainingOnly,
+        Dictionary<string, string>? tagLookup = null)
     {
         var active = items.Where(i => !i.IsDone).ToList();
         var done = items.Where(i => i.IsDone).ToList();
@@ -118,7 +126,7 @@ public static class PrintService
             sb.AppendLine($"<div class='section-title'>{Strings.PrintSectionActive}</div><ul>");
             foreach (var item in active)
             {
-                sb.AppendLine($"<li><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span></li>");
+                sb.AppendLine($"<li><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span>{RenderTagChips(item, tagLookup)}</li>");
                 if (item.HasNote)
                     sb.AppendLine($"<div class='note'>{WebUtility.HtmlEncode(item.Note!)}</div>");
             }
@@ -131,11 +139,26 @@ public static class PrintService
             sb.AppendLine($"<div class='section-title'>{Strings.PrintSectionCompleted}</div><ul>");
             foreach (var item in done)
             {
-                sb.AppendLine($"<li class='done'><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span></li>");
+                sb.AppendLine($"<li class='done'><div class='checkbox'></div><span class='text'>{WebUtility.HtmlEncode(item.Title)}</span>{RenderTagChips(item, tagLookup)}</li>");
                 if (item.HasNote)
                     sb.AppendLine($"<div class='note'>{WebUtility.HtmlEncode(item.Note!)}</div>");
             }
             sb.AppendLine("</ul></div>");
         }
+    }
+
+    private static string RenderTagChips(TodoItem item, Dictionary<string, string>? tagLookup)
+    {
+        if (tagLookup == null || item.Tags.Count == 0) return string.Empty;
+        var chips = new StringBuilder();
+        chips.Append("<div class='tags'>");
+        foreach (var tag in item.Tags)
+        {
+            var color = tagLookup.TryGetValue(tag, out var c) ? c : "#888888";
+            var label = WebUtility.HtmlEncode(Strings.GetTagDisplayName(tag));
+            chips.Append($"<span class='tag' style='background:{color}'>{label}</span>");
+        }
+        chips.Append("</div>");
+        return chips.ToString();
     }
 }

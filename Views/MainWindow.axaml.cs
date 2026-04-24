@@ -10,6 +10,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
         DatePicker.SelectedDateChanged += OnDateChanged;
         _settings = DataService.LoadSettings();
         DataService.ApplyCustomPath(_settings);
+        _accordionBuilder.Tags = _settings.GetAllTags();
         Strings.SetLanguage(_settings.Language);
         ApplyTheme();
         ApplyLocalization();
@@ -296,11 +299,12 @@ public partial class MainWindow : Window
         if (sender is Button btn && btn.DataContext is TodoItem item)
         {
             var win = new NoteEditorWindow();
-            win.LoadNote(item.Title, item.Note);
+            win.LoadNote(item.Title, item.Note, item.Tags, _settings.GetAllTags());
             var result = await win.ShowDialog<bool?>(this);
             if (result == true)
             {
                 item.Note = win.ResultNote;
+                item.Tags = win.ResultTags;
                 var expanded = _expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet();
                 RebuildAccordion(expanded);
                 Save();
@@ -311,13 +315,15 @@ public partial class MainWindow : Window
     private async void OnSettingsClick(object? sender, RoutedEventArgs e)
     {
         var win = new SettingsWindow();
-        win.LoadFrom(_settings);
+        var usedTags = _allItems.SelectMany(i => i.Tags).Distinct();
+        win.LoadFrom(_settings, usedTags);
         var result = await win.ShowDialog<bool?>(this);
         if (result == true)
         {
             var oldSavePath = DataService.SavePath;
             _settings = win.Result;
             Strings.SetLanguage(_settings.Language);
+            _accordionBuilder.Tags = _settings.GetAllTags();
 
             // Move todos.json if the data path changed
             DataService.MoveDataFile(oldSavePath, _settings);
@@ -352,16 +358,85 @@ public partial class MainWindow : Window
     private void ApplyLocalization()
     {
         HeaderLabel.Text = Strings.AppTitle;
-        TodayButton.Content = Strings.ButtonToday;
+        TodayButton.Content = BuildActionButtonContent("📅", Strings.ButtonToday, "#7e6ea8");
         ToolTip.SetTip(DeleteDateButton, Strings.TooltipDeleteDate);
-        PrintButton.Content = Strings.ButtonPrint;
-        ImportButton.Content = Strings.ButtonImport;
-        ExportButton.Content = Strings.ButtonExport;
+        DeleteDateButton.Content = BuildIconOnlyBadge("🗑", "#b06060");
+        PrintButton.Content = BuildActionButtonContent("🖨", Strings.ButtonPrint, "#4a9080");
+        ImportButton.Content = BuildActionButtonContent("📥", Strings.ButtonImport, "#5b82a8");
+        ExportButton.Content = BuildActionButtonContent("📤", Strings.ButtonExport, "#b07840");
+        ICalButton.Content = BuildActionButtonContent("🗓", Strings.ButtonICal, "#5a7080");
         ToolTip.SetTip(ICalButton, Strings.TooltipICal);
-        SettingsButton.Content = Strings.ButtonSettings;
+        SettingsButton.Content = BuildActionButtonContent("⚙", Strings.ButtonSettings, "#5a6472");
+        AboutButton.Content = BuildIconOnlyBadge("ℹ", "#7e6ea8");
         ToolTip.SetTip(AboutButton, Strings.TooltipAbout);
         AddButton.Content = Strings.ButtonAdd;
         NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
+
+        // Keep action bar controls visually consistent across platforms.
+        ApplyToolbarButtonSizing();
+    }
+
+    private static Control BuildActionButtonContent(string icon, string label, string colorHex)
+    {
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 7,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        panel.Children.Add(BuildIconOnlyBadge(icon, colorHex));
+        panel.Children.Add(new TextBlock
+        {
+            Text = label,
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold
+        });
+
+        return panel;
+    }
+
+    private static Border BuildIconOnlyBadge(string icon, string colorHex)
+    {
+        return new Border
+        {
+            Width = 20,
+            Height = 20,
+            CornerRadius = new CornerRadius(10),
+            Background = new SolidColorBrush(Color.Parse(colorHex)),
+            Child = new TextBlock
+            {
+                Text = icon,
+                Foreground = Brushes.White,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            }
+        };
+    }
+
+    private void ApplyToolbarButtonSizing()
+    {
+        var textButtons = new[] { TodayButton, PrintButton, ImportButton, ExportButton, ICalButton, SettingsButton };
+        foreach (var button in textButtons)
+        {
+            button.Padding = new Thickness(10, 6);
+            button.MinHeight = 32;
+            button.VerticalContentAlignment = VerticalAlignment.Center;
+        }
+
+        var iconButtons = new[] { DeleteDateButton, AboutButton };
+        foreach (var button in iconButtons)
+        {
+            button.Padding = new Thickness(6, 5);
+            button.MinHeight = 32;
+            button.MinWidth = 32;
+            button.VerticalContentAlignment = VerticalAlignment.Center;
+            button.HorizontalContentAlignment = HorizontalAlignment.Center;
+        }
     }
 
     private void ApplyTheme()
@@ -478,7 +553,7 @@ public partial class MainWindow : Window
         if (remainingOnly)
             items = items.Where(i => !i.IsDone).ToList();
 
-        var html = PrintService.GenerateHtml(items, _allItems, _settings, _selectedDate);
+        var html = PrintService.GenerateHtml(items, _allItems, _settings, _selectedDate, _settings.GetAllTags());
         var printPath = Path.Combine(Path.GetTempPath(), "yatodol-print.html");
         File.WriteAllText(printPath, html);
         Process.Start(new ProcessStartInfo(printPath) { UseShellExecute = true });
