@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
@@ -36,6 +37,11 @@ public partial class MainWindow : Window
 
     private AppSettings _settings = new();
 
+    // ── Filter state ─────────────────────────────────────────────────────
+    private readonly HashSet<string> _activeTagFilters = [];
+    private string _searchQuery = string.Empty;
+    private bool _searchIsRegex;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -53,6 +59,7 @@ public partial class MainWindow : Window
             _allItems.Add(item);
         CarryForwardPastTasks();
         RebuildAccordion();
+        RebuildFilterPanel();
         ScheduleMidnightCheck();
     }
 
@@ -269,7 +276,8 @@ public partial class MainWindow : Window
         AccordionPanel.Children.Clear();
         _expanders.Clear();
 
-        var groups = _allItems.OrderByDescending(i => i.Date).GroupBy(i => i.Date.Date);
+        var filtered = ApplyFilters(_allItems);
+        var groups = filtered.OrderByDescending(i => i.Date).GroupBy(i => i.Date.Date);
 
         foreach (var group in groups.Where(g =>
             !_settings.HideCompletedDates || g.Any(i => !i.IsDone)))
@@ -292,6 +300,121 @@ public partial class MainWindow : Window
         }
 
         UpdateCount();
+    }
+
+    // ── Filter & search ──────────────────────────────────────────────────
+
+    private IEnumerable<TodoItem> ApplyFilters(IEnumerable<TodoItem> items)
+    {
+        if (_activeTagFilters.Count > 0)
+            items = items.Where(i => i.Tags.Any(t => _activeTagFilters.Contains(t)));
+
+        var q = _searchQuery;
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            if (_searchIsRegex)
+            {
+                try
+                {
+                    var rx = new Regex(q, RegexOptions.IgnoreCase);
+                    items = items.Where(i => rx.IsMatch(i.Title) || (i.Note != null && rx.IsMatch(i.Note)));
+                }
+                catch (RegexParseException) { /* invalid pattern — show all */ }
+            }
+            else
+            {
+                // Wildcard mode: * = any chars, ? = one char; plain text = substring match
+                bool hasWildcard = q.Contains('*') || q.Contains('?');
+                if (hasWildcard)
+                {
+                    var pattern = "^" + Regex.Escape(q)
+                        .Replace(@"\*", ".*")
+                        .Replace(@"\?", ".") + "$";
+                    try
+                    {
+                        var rx = new Regex(pattern, RegexOptions.IgnoreCase);
+                        items = items.Where(i => rx.IsMatch(i.Title) || (i.Note != null && rx.IsMatch(i.Note)));
+                    }
+                    catch (RegexParseException) { }
+                }
+                else
+                {
+                    items = items.Where(i =>
+                        i.Title.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                        (i.Note != null && i.Note.Contains(q, StringComparison.OrdinalIgnoreCase)));
+                }
+            }
+        }
+
+        return items;
+    }
+
+    private void RebuildFilterPanel()
+    {
+        FilterTagsPanel.Children.Clear();
+        foreach (var tag in _settings.GetAllTags())
+        {
+            var isActive = _activeTagFilters.Contains(tag.Name);
+            var col = Color.Parse(tag.Color);
+            var fullBrush = new SolidColorBrush(col);
+
+            var chip = new Border
+            {
+                CornerRadius = new CornerRadius(10),
+                Background = isActive
+                    ? fullBrush
+                    : new SolidColorBrush(Color.FromArgb(30, col.R, col.G, col.B)),
+                BorderBrush = fullBrush,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8, 4),
+                Margin = new Thickness(0, 0, 4, 4),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Child = new TextBlock
+                {
+                    Text = Strings.GetTagDisplayName(tag.Name),
+                    Foreground = isActive ? Brushes.White : fullBrush,
+                    FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+
+            var tagName = tag.Name;
+            chip.PointerPressed += (_, _) =>
+            {
+                if (_activeTagFilters.Contains(tagName))
+                    _activeTagFilters.Remove(tagName);
+                else
+                    _activeTagFilters.Add(tagName);
+
+                FilterClearButton.IsVisible = _activeTagFilters.Count > 0;
+                RebuildFilterPanel();
+                RebuildAccordion(_expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet());
+            };
+
+            FilterTagsPanel.Children.Add(chip);
+        }
+    }
+
+    private void OnFilterClearClick(object? sender, RoutedEventArgs e)
+    {
+        _activeTagFilters.Clear();
+        FilterClearButton.IsVisible = false;
+        RebuildFilterPanel();
+        RebuildAccordion();
+    }
+
+    private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        _searchQuery = SearchBox.Text ?? string.Empty;
+        RebuildAccordion(_expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet());
+    }
+
+    private void OnRegexToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        _searchIsRegex = RegexToggleButton.IsChecked == true;
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+            RebuildAccordion(_expanders.Where(kv => kv.Value.IsExpanded).Select(kv => kv.Key).ToHashSet());
     }
 
     private async void OnNoteClick(object? sender, RoutedEventArgs e)
@@ -333,6 +456,10 @@ public partial class MainWindow : Window
             UpdateTitle();
             DataService.SaveSettings(_settings);
             CarryForwardPastTasks();
+            // Remove any active tag filters that no longer exist after settings change
+            _activeTagFilters.IntersectWith(_settings.GetAllTags().Select(t => t.Name));
+            FilterClearButton.IsVisible = _activeTagFilters.Count > 0;
+            RebuildFilterPanel();
             RebuildAccordion();
         }
         else
@@ -358,21 +485,36 @@ public partial class MainWindow : Window
     private void ApplyLocalization()
     {
         HeaderLabel.Text = Strings.AppTitle;
-        TodayButton.Content = BuildActionButtonContent("📅", Strings.ButtonToday, "#7e6ea8");
+
+        // Sidebar section labels
+        SidebarNavLabel.Text   = Strings.SidebarNavSection;
+        SidebarTasksLabel.Text = Strings.SidebarTasksSection;
+        SidebarAppLabel.Text   = Strings.SidebarAppSection;
+
+        // Navigation group
+        TodayButton.Content      = BuildActionButtonContent("📅", Strings.ButtonToday, "#7e6ea8");
+        DeleteDateButton.Content = BuildActionButtonContent("🗑", Strings.ButtonDeleteDate, "#b06060");
         ToolTip.SetTip(DeleteDateButton, Strings.TooltipDeleteDate);
-        DeleteDateButton.Content = BuildIconOnlyBadge("🗑", "#b06060");
-        PrintButton.Content = BuildActionButtonContent("🖨", Strings.ButtonPrint, "#4a9080");
+
+        // Tasks group
+        PrintButton.Content  = BuildActionButtonContent("🖨", Strings.ButtonPrint, "#4a9080");
         ImportButton.Content = BuildActionButtonContent("📥", Strings.ButtonImport, "#5b82a8");
         ExportButton.Content = BuildActionButtonContent("📤", Strings.ButtonExport, "#b07840");
-        ICalButton.Content = BuildActionButtonContent("🗓", Strings.ButtonICal, "#5a7080");
+        ICalButton.Content   = BuildActionButtonContent("🗓", Strings.ButtonICal, "#5a7080");
         ToolTip.SetTip(ICalButton, Strings.TooltipICal);
-        SettingsButton.Content = BuildActionButtonContent("⚙", Strings.ButtonSettings, "#5a6472");
-        AboutButton.Content = BuildIconOnlyBadge("ℹ", "#7e6ea8");
-        ToolTip.SetTip(AboutButton, Strings.TooltipAbout);
-        AddButton.Content = Strings.ButtonAdd;
-        NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
 
-        // Keep action bar controls visually consistent across platforms.
+        // App group
+        SettingsButton.Content = BuildActionButtonContent("⚙", Strings.ButtonSettings, "#5a6472");
+        AboutButton.Content    = BuildActionButtonContent("ℹ", Strings.ButtonAbout, "#7e6ea8");
+        ToolTip.SetTip(AboutButton, Strings.TooltipAbout);
+
+        AddButton.Content          = Strings.ButtonAdd;
+        NewItemBox.PlaceholderText = Strings.PlaceholderNewTask;
+        SearchBox.PlaceholderText  = Strings.SearchPlaceholder;
+        ToolTip.SetTip(RegexToggleButton, Strings.TooltipRegexToggle);
+        SidebarFilterLabel.Text    = Strings.SidebarFilterSection;
+        FilterClearButton.Content  = Strings.FilterClearButton;
+
         ApplyToolbarButtonSizing();
     }
 
@@ -420,22 +562,17 @@ public partial class MainWindow : Window
 
     private void ApplyToolbarButtonSizing()
     {
-        var textButtons = new[] { TodayButton, PrintButton, ImportButton, ExportButton, ICalButton, SettingsButton };
-        foreach (var button in textButtons)
+        var sidebarButtons = new[]
         {
-            button.Padding = new Thickness(10, 6);
-            button.MinHeight = 32;
-            button.VerticalContentAlignment = VerticalAlignment.Center;
-        }
-
-        var iconButtons = new[] { DeleteDateButton, AboutButton };
-        foreach (var button in iconButtons)
+            TodayButton, DeleteDateButton,
+            PrintButton, ImportButton, ExportButton, ICalButton,
+            SettingsButton, AboutButton
+        };
+        foreach (var btn in sidebarButtons)
         {
-            button.Padding = new Thickness(6, 5);
-            button.MinHeight = 32;
-            button.MinWidth = 32;
-            button.VerticalContentAlignment = VerticalAlignment.Center;
-            button.HorizontalContentAlignment = HorizontalAlignment.Center;
+            btn.Padding = new Thickness(10, 8);
+            btn.MinHeight = 36;
+            btn.HorizontalContentAlignment = HorizontalAlignment.Left;
         }
     }
 

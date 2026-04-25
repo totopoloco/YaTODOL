@@ -100,6 +100,78 @@ public static class Strings
         _                   => "About YaTODOL"
     };
 
+    public static string ButtonDeleteDate => _language switch
+    {
+        AppLanguage.Spanish => "Borrar fecha",
+        AppLanguage.German  => "Datum löschen",
+        AppLanguage.French  => "Effacer date",
+        _                   => "Clear Date"
+    };
+
+    public static string ButtonAbout => _language switch
+    {
+        AppLanguage.Spanish => "Acerca de",
+        AppLanguage.German  => "Über",
+        AppLanguage.French  => "À propos",
+        _                   => "About"
+    };
+
+    public static string SidebarNavSection => _language switch
+    {
+        AppLanguage.Spanish => "NAVEGACIÓN",
+        AppLanguage.German  => "NAVIGATION",
+        AppLanguage.French  => "NAVIGATION",
+        _                   => "NAVIGATION"
+    };
+
+    public static string SidebarTasksSection => _language switch
+    {
+        AppLanguage.Spanish => "TAREAS",
+        AppLanguage.German  => "AUFGABEN",
+        AppLanguage.French  => "TÂCHES",
+        _                   => "TASKS"
+    };
+
+    public static string SidebarAppSection => _language switch
+    {
+        AppLanguage.Spanish => "APLICACIÓN",
+        AppLanguage.German  => "ANWENDUNG",
+        AppLanguage.French  => "APPLICATION",
+        _                   => "APP"
+    };
+
+    public static string SidebarFilterSection => _language switch
+    {
+        AppLanguage.Spanish => "FILTRAR",
+        AppLanguage.German  => "FILTER",
+        AppLanguage.French  => "FILTRER",
+        _                   => "FILTER"
+    };
+
+    public static string FilterClearButton => _language switch
+    {
+        AppLanguage.Spanish => "Limpiar",
+        AppLanguage.German  => "Löschen",
+        AppLanguage.French  => "Effacer",
+        _                   => "Clear"
+    };
+
+    public static string SearchPlaceholder => _language switch
+    {
+        AppLanguage.Spanish => "Buscar tareas... (* ? o /regex/)",
+        AppLanguage.German  => "Aufgaben suchen... (* ? oder /regex/)",
+        AppLanguage.French  => "Rechercher des tâches... (* ? ou /regex/)",
+        _                   => "Search tasks... (* ? or /regex/)"
+    };
+
+    public static string TooltipRegexToggle => _language switch
+    {
+        AppLanguage.Spanish => "Activar expresiones regulares",
+        AppLanguage.German  => "Reguläre Ausdrücke aktivieren",
+        AppLanguage.French  => "Activer les expressions régulières",
+        _                   => "Enable regular expressions"
+    };
+
     public static string ButtonAdd => _language switch
     {
         AppLanguage.Spanish => "Añadir",
