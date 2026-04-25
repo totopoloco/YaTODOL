@@ -4,6 +4,7 @@ using YATODOL.Utilities;
 
 namespace YATODOL.Tests.Services;
 
+[Collection("Strings-dependent")]
 public class PrintServiceTests
 {
     public PrintServiceTests()
@@ -19,7 +20,7 @@ public class PrintServiceTests
 
         Assert.Contains("<!DOCTYPE html>", html);
         Assert.Contains("YATODOL", html);
-        Assert.Contains("No tasks to display", html);
+        Assert.Contains(Strings.PrintNoTasks, html);
     }
 
     [Fact]
@@ -202,5 +203,102 @@ public class PrintServiceTests
         // Both dates should appear as day headers in content
         var headerCount = html.Split("class='day-header'").Length - 1;
         Assert.Equal(2, headerCount);
+    }
+
+    // ── Tag rendering tests ───────────────────────────────────────────────
+
+    [Fact]
+    public void GenerateHtml_WithTags_RendersTagChips()
+    {
+        var allTags = new List<TagDefinition>
+        {
+            new() { Name = "Urgent", Color = "#b06060" }
+        };
+        var items = new List<TodoItem>
+        {
+            new() { Title = "Tagged task", IsDone = false, Date = DateTime.Today, Tags = ["Urgent"] }
+        };
+        var settings = new AppSettings();
+
+        var html = PrintService.GenerateHtml(items, items, settings, DateTime.Today, allTags);
+
+        Assert.Contains("class='tags'", html);
+        Assert.Contains("class='tag'", html);
+        Assert.Contains("background:#b06060", html);
+        Assert.Contains("Urgent", html);
+    }
+
+    [Fact]
+    public void GenerateHtml_WithTagsNoTagDefs_RendersChipsWithFallbackColor()
+    {
+        var items = new List<TodoItem>
+        {
+            new() { Title = "Tagged task", IsDone = false, Date = DateTime.Today, Tags = ["Urgent"] }
+        };
+        var settings = new AppSettings();
+
+        // When allTags is null the lookup is empty so the fallback color (#888888) is used,
+        // but the chip is still rendered because the item has a tag.
+        var html = PrintService.GenerateHtml(items, items, settings, DateTime.Today, null);
+
+        Assert.Contains("class='tags'", html);
+        Assert.Contains("class='tag'", html);
+        Assert.Contains("background:#888888", html);
+    }
+
+    [Fact]
+    public void GenerateHtml_TagNamesAreHtmlEncoded()
+    {
+        var allTags = new List<TagDefinition>
+        {
+            new() { Name = "<b>Bold</b>", Color = "#aaaaaa" }
+        };
+        var items = new List<TodoItem>
+        {
+            new() { Title = "Task", IsDone = false, Date = DateTime.Today, Tags = ["<b>Bold</b>"] }
+        };
+        var settings = new AppSettings();
+
+        var html = PrintService.GenerateHtml(items, items, settings, DateTime.Today, allTags);
+
+        Assert.DoesNotContain("<b>Bold</b>", html);
+        Assert.Contains("&lt;b&gt;Bold&lt;/b&gt;", html);
+    }
+
+    [Fact]
+    public void GenerateHtml_CompletedTask_WithTags_RendersTagChips()
+    {
+        var allTags = new List<TagDefinition>
+        {
+            new() { Name = "Low", Color = "#4a8060" }
+        };
+        var items = new List<TodoItem>
+        {
+            new() { Title = "Done task", IsDone = true, Date = DateTime.Today, Tags = ["Low"] }
+        };
+        var settings = new AppSettings { PrintFilter = PrintFilter.AllItems };
+
+        var html = PrintService.GenerateHtml(items, items, settings, DateTime.Today, allTags);
+
+        Assert.Contains("class='tag'", html);
+        Assert.Contains("background:#4a8060", html);
+    }
+
+    [Fact]
+    public void GenerateHtml_TaskWithNoTags_DoesNotRenderTagSection()
+    {
+        var allTags = new List<TagDefinition>
+        {
+            new() { Name = "Urgent", Color = "#b06060" }
+        };
+        var items = new List<TodoItem>
+        {
+            new() { Title = "Untagged task", IsDone = false, Date = DateTime.Today, Tags = [] }
+        };
+        var settings = new AppSettings();
+
+        var html = PrintService.GenerateHtml(items, items, settings, DateTime.Today, allTags);
+
+        Assert.DoesNotContain("class='tags'", html);
     }
 }

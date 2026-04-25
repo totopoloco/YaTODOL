@@ -91,4 +91,110 @@ public class AppSettingsTests
         var settings = new AppSettings { Language = lang };
         Assert.Equal(lang, settings.Language);
     }
+
+    // ── TagDefinition tests ───────────────────────────────────────────────
+
+    [Fact]
+    public void TagDefinition_DefaultValues_AreCorrect()
+    {
+        var tag = new TagDefinition();
+        Assert.Equal(string.Empty, tag.Name);
+        Assert.Equal("#888888", tag.Color);
+    }
+
+    [Fact]
+    public void TagDefinition_CanSetNameAndColor()
+    {
+        var tag = new TagDefinition { Name = "Work", Color = "#5b82a8" };
+        Assert.Equal("Work", tag.Name);
+        Assert.Equal("#5b82a8", tag.Color);
+    }
+
+    // ── BuiltInTags tests ─────────────────────────────────────────────────
+
+    [Fact]
+    public void BuiltInTags_All_ContainsExactlyThreeEntries()
+    {
+        Assert.Equal(3, BuiltInTags.All.Count);
+    }
+
+    [Fact]
+    public void BuiltInTags_All_ContainsUrgentImportantLow()
+    {
+        var names = BuiltInTags.All.Select(t => t.Name).ToList();
+        Assert.Contains(BuiltInTags.Urgent, names);
+        Assert.Contains(BuiltInTags.Important, names);
+        Assert.Contains(BuiltInTags.Low, names);
+    }
+
+    [Theory]
+    [InlineData(BuiltInTags.Urgent)]
+    [InlineData(BuiltInTags.Important)]
+    [InlineData(BuiltInTags.Low)]
+    public void BuiltInTags_IsBuiltIn_ReturnsTrueForBuiltIns(string name)
+    {
+        Assert.True(BuiltInTags.IsBuiltIn(name));
+    }
+
+    [Theory]
+    [InlineData("Work")]
+    [InlineData("Personal")]
+    [InlineData("urgent")]   // case-sensitive
+    [InlineData("")]
+    public void BuiltInTags_IsBuiltIn_ReturnsFalseForCustomOrEmpty(string name)
+    {
+        Assert.False(BuiltInTags.IsBuiltIn(name));
+    }
+
+    [Fact]
+    public void BuiltInTags_All_EachHasNonEmptyColor()
+    {
+        foreach (var tag in BuiltInTags.All)
+            Assert.False(string.IsNullOrEmpty(tag.Color));
+    }
+
+    // ── AppSettings tag integration ───────────────────────────────────────
+
+    [Fact]
+    public void AppSettings_CustomTags_DefaultIsEmpty()
+    {
+        var settings = new AppSettings();
+        Assert.NotNull(settings.CustomTags);
+        Assert.Empty(settings.CustomTags);
+    }
+
+    [Fact]
+    public void GetAllTags_NoCustomTags_ReturnsOnlyBuiltIns()
+    {
+        var settings = new AppSettings();
+        var all = settings.GetAllTags().ToList();
+        Assert.Equal(3, all.Count);
+    }
+
+    [Fact]
+    public void GetAllTags_WithCustomTags_ReturnsBuiltInsAndCustom()
+    {
+        var settings = new AppSettings
+        {
+            CustomTags = [new TagDefinition { Name = "Work", Color = "#5b82a8" }]
+        };
+        var all = settings.GetAllTags().ToList();
+        Assert.Equal(4, all.Count);
+        Assert.Contains(all, t => t.Name == "Work");
+        Assert.Contains(all, t => t.Name == BuiltInTags.Urgent);
+    }
+
+    [Fact]
+    public void GetAllTags_BuiltInsAlwaysFirst()
+    {
+        var settings = new AppSettings
+        {
+            CustomTags = [new TagDefinition { Name = "ZZZ", Color = "#aaaaaa" }]
+        };
+        var all = settings.GetAllTags().ToList();
+        Assert.Equal(BuiltInTags.Urgent,    all[0].Name);
+        Assert.Equal(BuiltInTags.Important, all[1].Name);
+        Assert.Equal(BuiltInTags.Low,       all[2].Name);
+        Assert.Equal("ZZZ",                 all[3].Name);
+    }
 }

@@ -1,3 +1,18 @@
+## 1.5.0
+
+- Redesigned main window layout with a two-panel design: collapsible sidebar for navigation and actions, main area for task input and list
+- Sidebar organizes buttons into three groups: Navigation, Tasks, and App, each with a section label
+- Added tag filter panel at the bottom of the sidebar — click tag chips to narrow the task list to matching tasks
+- Active tag filters can be cleared with a single button; disappearing automatically when filters are empty
+- Added search bar above the task accordion with real-time filtering as you type
+- Search supports plain text (substring), wildcard patterns (`*` any chars, `?` one char), and full regular expressions
+- Search and tag filters combine with AND logic — a task must match both to appear
+- Search applies to both task titles and note content
+- Built-in tags (Urgent, Important, Low) are now mutually exclusive per task — selecting one deselects the other
+- Tags are now rendered as colored pills in print output
+- Startup window height increased for a more comfortable default layout
+- All new strings are localized in English, Spanish, German, and French
+
 ## 1.4.0
 
 - Added tag support — assign color-coded tags to tasks to categorize and highlight them

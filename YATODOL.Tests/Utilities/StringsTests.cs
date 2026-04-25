@@ -3,6 +3,7 @@ using YATODOL.Utilities;
 
 namespace YATODOL.Tests.Utilities;
 
+[Collection("Strings-dependent")]
 public class StringsTests : IDisposable
 {
     public StringsTests()
@@ -270,5 +271,85 @@ public class StringsTests : IDisposable
         Assert.False(string.IsNullOrEmpty(Strings.TooltipDragReorder));
         Assert.False(string.IsNullOrEmpty(Strings.TooltipRename));
         Assert.False(string.IsNullOrEmpty(Strings.SaveFailed));
+    }
+
+    // ── Tag strings ───────────────────────────────────────────────────────
+
+    [Theory]
+    [InlineData(AppLanguage.English)]
+    [InlineData(AppLanguage.Spanish)]
+    [InlineData(AppLanguage.German)]
+    [InlineData(AppLanguage.French)]
+    public void AllTagStrings_AreNonEmpty(AppLanguage lang)
+    {
+        Strings.SetLanguage(lang);
+        Assert.False(string.IsNullOrEmpty(Strings.TagUrgent));
+        Assert.False(string.IsNullOrEmpty(Strings.TagImportant));
+        Assert.False(string.IsNullOrEmpty(Strings.TagLow));
+        Assert.False(string.IsNullOrEmpty(Strings.SectionTags));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsBuiltInHeader));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsCustomHeader));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsAddPlaceholder));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsAddButton));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsDeleteTooltip));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsInUseTooltip));
+        Assert.False(string.IsNullOrEmpty(Strings.TagsColorLabel));
+        Assert.False(string.IsNullOrEmpty(Strings.NoteEditorTagsLabel));
+    }
+
+    [Fact]
+    public void GetTagDisplayName_BuiltIns_ReturnsLocalizedName_English()
+    {
+        Strings.SetLanguage(AppLanguage.English);
+        Assert.Equal("Urgent",    Strings.GetTagDisplayName("Urgent"));
+        Assert.Equal("Important", Strings.GetTagDisplayName("Important"));
+        Assert.Equal("Low",       Strings.GetTagDisplayName("Low"));
+    }
+
+    [Fact]
+    public void GetTagDisplayName_BuiltIns_ReturnsLocalizedName_Spanish()
+    {
+        Strings.SetLanguage(AppLanguage.Spanish);
+        Assert.Equal(Strings.TagUrgent,    Strings.GetTagDisplayName("Urgent"));
+        Assert.Equal(Strings.TagImportant, Strings.GetTagDisplayName("Important"));
+        Assert.Equal(Strings.TagLow,       Strings.GetTagDisplayName("Low"));
+    }
+
+    [Fact]
+    public void GetTagDisplayName_CustomTag_ReturnsTagNameAsIs()
+    {
+        Strings.SetLanguage(AppLanguage.English);
+        Assert.Equal("MyCustomTag", Strings.GetTagDisplayName("MyCustomTag"));
+    }
+
+    // ── Sidebar & filter strings ──────────────────────────────────────────
+
+    [Theory]
+    [InlineData(AppLanguage.English)]
+    [InlineData(AppLanguage.Spanish)]
+    [InlineData(AppLanguage.German)]
+    [InlineData(AppLanguage.French)]
+    public void AllSidebarStrings_AreNonEmpty(AppLanguage lang)
+    {
+        Strings.SetLanguage(lang);
+        Assert.False(string.IsNullOrEmpty(Strings.SidebarNavSection));
+        Assert.False(string.IsNullOrEmpty(Strings.SidebarTasksSection));
+        Assert.False(string.IsNullOrEmpty(Strings.SidebarAppSection));
+        Assert.False(string.IsNullOrEmpty(Strings.SidebarFilterSection));
+        Assert.False(string.IsNullOrEmpty(Strings.ButtonDeleteDate));
+        Assert.False(string.IsNullOrEmpty(Strings.ButtonAbout));
+    }
+
+    [Theory]
+    [InlineData(AppLanguage.English)]
+    [InlineData(AppLanguage.Spanish)]
+    [InlineData(AppLanguage.German)]
+    [InlineData(AppLanguage.French)]
+    public void AllFilterSearchStrings_AreNonEmpty(AppLanguage lang)
+    {
+        Strings.SetLanguage(lang);
+        Assert.False(string.IsNullOrEmpty(Strings.FilterClearButton));
+        Assert.False(string.IsNullOrEmpty(Strings.SearchPlaceholder));
+        Assert.False(string.IsNullOrEmpty(Strings.TooltipRegexToggle));
     }
 }

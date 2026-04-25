@@ -135,6 +135,54 @@ public class TodoItemTests
         Assert.Equal(3, item.SortOrder);
     }
 
+    // ── Tag tests ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Tags_DefaultValue_IsEmptyList()
+    {
+        var item = new TodoItem();
+        Assert.NotNull(item.Tags);
+        Assert.Empty(item.Tags);
+    }
+
+    [Fact]
+    public void HasTags_ReturnsFalse_WhenTagsIsEmpty()
+    {
+        var item = new TodoItem { Tags = [] };
+        Assert.False(item.HasTags);
+    }
+
+    [Fact]
+    public void HasTags_ReturnsTrue_WhenTagsHasItems()
+    {
+        var item = new TodoItem { Tags = ["Urgent"] };
+        Assert.True(item.HasTags);
+    }
+
+    [Fact]
+    public void Tags_SetValue_RaisesPropertyChangedForTagsAndHasTags()
+    {
+        var item = new TodoItem();
+        var changed = new List<string>();
+        item.PropertyChanged += (_, e) => changed.Add(e.PropertyName!);
+
+        item.Tags = ["Important"];
+
+        Assert.Contains(nameof(TodoItem.Tags), changed);
+        Assert.Contains(nameof(TodoItem.HasTags), changed);
+        Assert.Equal(["Important"], item.Tags);
+    }
+
+    [Fact]
+    public void Tags_CanHoldMultipleCustomTags()
+    {
+        var item = new TodoItem { Tags = ["Work", "Personal", "Later"] };
+        Assert.Equal(3, item.Tags.Count);
+        Assert.Contains("Work", item.Tags);
+        Assert.Contains("Personal", item.Tags);
+        Assert.Contains("Later", item.Tags);
+    }
+
     private static bool AssertPropertyChanged(TodoItem item, string expectedProperty, Action action)
     {
         bool raised = false;
